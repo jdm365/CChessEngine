@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <omp.h>
+#include <time.h>
 
 #include "board.h"
 #include "movegen.h"
@@ -89,6 +89,7 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 
 	uint64_t nodes_visited = 0;
 
+	clock_t start = clock();
 	for (int idx = 0; idx < moves.count; ++idx) {
 		++nodes_visited;
 
@@ -111,5 +112,6 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 	}
 
 	printf("Nodes visited: %llu\n", nodes_visited);
+	printf("MNps: %f\n", (float)nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
 	return best_move;
 }
