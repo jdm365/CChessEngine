@@ -22,6 +22,7 @@ void print_legal_moves(const Board* board, enum Color color);
 Move get_move_from_string(const char* move);
 const char* get_string_from_move(Move move);
 bool is_move_legal(MoveList* legal_moves, Move move);
+bool game_over(const Board* board);
 
 /****************************************************************
 

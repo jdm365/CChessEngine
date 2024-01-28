@@ -39,7 +39,7 @@ float minimax(
 		) {
 	float maximizing_factor = (color == WHITE) ? 1.0f : -1.0f;
 
-	if (depth == max_depth) {
+	if ((depth == max_depth) || game_over(board)) {
 		return eval_board(board) * maximizing_factor;
 	}
 

@@ -406,6 +406,40 @@ enum Color is_occupied_by(const Board* board, uint8_t square) {
 
 	return EMPTY;
 }
+enum ColoredPiece piece_at(const Board* board, uint8_t square) {
+	if (board->white_pawns & (1ULL << square)) {
+		return WHITE_PAWN;
+	} else if (board->white_knights & (1ULL << square)) {
+		return WHITE_KNIGHT;
+	} else if (board->white_bishops & (1ULL << square)) {
+		return WHITE_BISHOP;
+	} else if (board->white_rooks & (1ULL << square)) {
+		return WHITE_ROOK;
+	} else if (board->white_queens & (1ULL << square)) {
+		return WHITE_QUEEN;
+	} else if (board->white_king & (1ULL << square)) {
+		return WHITE_KING;
+	} 
+
+	else if (board->black_pawns & (1ULL << square)) {
+		return BLACK_PAWN;
+	} else if (board->black_knights & (1ULL << square)) {
+		return BLACK_KNIGHT;
+	} else if (board->black_bishops & (1ULL << square)) {
+		return BLACK_BISHOP;
+	} else if (board->black_rooks & (1ULL << square)) {
+		return BLACK_ROOK;
+	} else if (board->black_queens & (1ULL << square)) {
+		return BLACK_QUEEN;
+	} else if (board->black_king & (1ULL << square)) {
+		return BLACK_KING;
+	} 
+
+	else {
+		return EMPTY_SQUARE;
+	}
+}
+
 
 bool is_empty(const Board* board, uint8_t square) {
 	return is_occupied_by(board, square) == EMPTY;

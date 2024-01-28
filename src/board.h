@@ -25,12 +25,15 @@ enum ColoredPiece {
 	WHITE_ROOK,
 	WHITE_QUEEN,
 	WHITE_KING,
+
 	BLACK_PAWN,
 	BLACK_KNIGHT,
 	BLACK_BISHOP,
 	BLACK_ROOK,
 	BLACK_QUEEN,
-	BLACK_KING
+	BLACK_KING,
+
+	EMPTY_SQUARE
 };
 
 typedef uint64_t BitBoard;
@@ -64,4 +67,5 @@ void _make_move(
 		uint8_t to_square
 		);
 enum Color is_occupied_by(const Board* board, uint8_t square);
+enum ColoredPiece piece_at(const Board* board, uint8_t square);
 bool is_empty(const Board* board, uint8_t square);

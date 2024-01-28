@@ -59,6 +59,10 @@ bool is_move_legal(MoveList* legal_moves, Move move) {
 	return false;
 }
 
+bool game_over(const Board* board) {
+	return (__builtin_popcountll(board->white_king | board->black_king) != 2);
+}
+
 void print_legal_moves(const Board* board, enum Color color) {
 	MoveList list;
 	init_move_list(&list);
@@ -531,6 +535,10 @@ void get_king_moves(
 		MoveList* list, 
 		enum Color color
 		) {
+	if (__builtin_popcountll(board->white_king | board->black_king) != 2) {
+		// printf("no king left\n");
+		return;
+	}
 	uint8_t square;
 	if (color == WHITE) {
 		square = __builtin_ctzll(board->white_king);
@@ -538,15 +546,14 @@ void get_king_moves(
 	else {
 		square = __builtin_ctzll(board->black_king);
 	}
-	// printf("king square: %d\n", square);
 
 	uint8_t rank = square / 8;
 	uint8_t file = square % 8;
 
-	bool upper = rank < 7;
-	bool right = file < 7;
-	bool lower = rank > 0;
-	bool left  = file > 0;
+	bool upper = (rank < 7);
+	bool right = (file < 7);
+	bool lower = (rank > 0);
+	bool left  = (file > 0);
 
 	bool upper_left  = (rank < 7) && (file > 0);
 	bool upper_right = (rank < 7) && (file < 7);
@@ -628,5 +635,5 @@ void get_legal_moves(
 	get_bishop_moves(board, list, color);
 	get_rook_moves(board, list, color);
 	get_queen_moves(board, list, color);
-	// get_king_moves(board, list, color);
+	get_king_moves(board, list, color);
 }

@@ -6,6 +6,7 @@
 #include "board.h"
 #include "movegen.h"
 #include "eval.h"
+#include "gui.h"
 
 
 
@@ -48,6 +49,39 @@ int main() {
 	init_board(&board);
 	populate_board_from_fen(&board, STARTING_FEN);
 
-	play_game(&board);
+	// play_game(&board);
+	struct GUI gui;
+	gui_init(&gui);
+
+	MoveList moves;
+
+	enum Color color = WHITE;
+	while (1) {
+		SDL_PumpEvents();
+
+		const uint8_t* keyboard_state = SDL_GetKeyboardState(NULL);
+
+		if (keyboard_state[SDL_SCANCODE_ESCAPE]) {
+			goto quit;
+		}
+
+		gui_draw_board(&gui, &board);
+
+		Move best_move = get_best_move(&board, color, 6);
+		_make_move(&board, best_move.from, best_move.to);
+		reset_move_list(&moves);
+
+		if (game_over(&board)) {
+			SDL_SetWindowTitle(gui.window, "Game Over");
+			goto quit;
+		}
+
+		color = !color;
+		SDL_Delay(250);
+	}
+	quit:
+		gui_quit(&gui);
+
+	gui_quit(&gui);
 	return 0;
 }
