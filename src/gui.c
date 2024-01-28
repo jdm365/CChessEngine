@@ -104,8 +104,7 @@ void gui_draw_board(struct GUI* gui, Board* board) {
 	SDL_Rect rect;
 	rect.w = 100;
 	rect.h = 100;
-	// for (int i = 0; i < 8; ++i) {
-	for (int i = 7; i >= 0; --i) {
+	for (int i = 0; i < 8; ++i) {
 		rect.y = i * 100;
 		for (int j = 0; j < 8; ++j) {
 			rect.x = j * 100;
@@ -128,7 +127,7 @@ void gui_draw_board(struct GUI* gui, Board* board) {
 						);
 			}
 			SDL_RenderFillRect(gui->renderer, &rect);
-			enum ColoredPiece piece = piece_at(board, i * 8 + j);
+			enum ColoredPiece piece = piece_at(board, (7 - i) * 8 + j);
 			if (piece != EMPTY_SQUARE) {
 				SDL_RenderCopy(
 						gui->renderer, 
