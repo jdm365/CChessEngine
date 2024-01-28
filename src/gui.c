@@ -105,6 +105,14 @@ void gui_draw_board(struct GUI* gui, Board* board) {
 	SDL_SetRenderDrawColor(gui->renderer, 0, 0, 0, 255);
 	SDL_RenderClear(gui->renderer);
 
+	// BitBoard pawns = board->white_pawns;
+	// BitBoard left_attacks  = (pawns & ~FILE_A) << 7;
+	// BitBoard right_attacks = (pawns & ~FILE_H) << 9;
+	// BitBoard pawns = board->black_pawns;
+	// BitBoard left_attacks  = (pawns & ~FILE_A) >> 9;
+	// BitBoard right_attacks = (pawns & ~FILE_H) >> 7;
+	// BitBoard attacks = left_attacks | right_attacks;
+
 	SDL_Rect rect;
 	rect.w = SQUARE_SIZE;
 	rect.h = SQUARE_SIZE;
@@ -112,11 +120,15 @@ void gui_draw_board(struct GUI* gui, Board* board) {
 		rect.y = i * SQUARE_SIZE;
 		for (int j = 0; j < 8; ++j) {
 			rect.x = j * SQUARE_SIZE;
+			int tint = 0;
+			// if (attacks & (1ULL << ((7 - i) * 8 + j))) {
+				// tint = 64;
+			// }
 			if ((i + j) % 2 == 0) {
 				SDL_SetRenderDrawColor(
 						gui->renderer, 
 						255, 
-						255, 
+						255 - tint, 
 						255, 
 						255
 						);
@@ -125,13 +137,13 @@ void gui_draw_board(struct GUI* gui, Board* board) {
 				SDL_SetRenderDrawColor(
 						gui->renderer, 
 						196, 
-						164, 
+						164 - tint, 
 						132, 
 						255
 						);
 			}
 			SDL_RenderFillRect(gui->renderer, &rect);
-			enum ColoredPiece piece = piece_at(board, (7 - i) * 8 + j);
+			enum ColoredPiece piece = colored_piece_at(board, (7 - i) * 8 + j);
 			if (piece != EMPTY_SQUARE) {
 				SDL_RenderCopy(
 						gui->renderer, 

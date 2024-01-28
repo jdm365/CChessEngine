@@ -451,7 +451,8 @@ enum Color is_occupied_by(const Board* board, uint8_t square) {
 
 	return EMPTY;
 }
-enum ColoredPiece piece_at(const Board* board, uint8_t square) {
+
+enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
 	if (board->white_pawns & (1ULL << square)) {
 		return WHITE_PAWN;
 	} else if (board->white_knights & (1ULL << square)) {
@@ -485,6 +486,26 @@ enum ColoredPiece piece_at(const Board* board, uint8_t square) {
 	}
 }
 
+enum Piece piece_at(const Board* board, uint8_t square) {
+	if ((board->white_pawns | board->black_pawns) & (1ULL << square)) {
+		return PAWN;
+	} else if ((board->white_knights | board->black_knights) & (1ULL << square)) {
+		return KNIGHT;
+	} else if ((board->white_bishops | board->black_bishops) & (1ULL << square)) {
+		return BISHOP;
+	} else if ((board->white_rooks | board->black_rooks) & (1ULL << square)) {
+		return ROOK;
+	} else if ((board->white_queens | board->black_queens) & (1ULL << square)) {
+		return QUEEN;
+	} else if ((board->white_king | board->black_king) & (1ULL << square)) {
+		return KING;
+	} 
+
+	else {
+		return EMPTY_PIECE;
+	}
+}
+
 
 bool is_empty(const Board* board, uint8_t square) {
 	return is_occupied_by(board, square) == EMPTY;
@@ -506,6 +527,29 @@ BitBoard get_occupied_squares(const Board* board) {
 	occupied_squares |= board->black_rooks;
 	occupied_squares |= board->black_queens;
 	occupied_squares |= board->black_king;
+
+	return occupied_squares;
+}
+
+BitBoard get_occupied_squares_color(const Board* board, enum Color color) {
+	BitBoard occupied_squares = 0;
+
+	if (color == WHITE) {
+		occupied_squares |= board->white_pawns;
+		occupied_squares |= board->white_knights;
+		occupied_squares |= board->white_bishops;
+		occupied_squares |= board->white_rooks;
+		occupied_squares |= board->white_queens;
+		occupied_squares |= board->white_king;
+	} 
+	else if (color == BLACK) {
+		occupied_squares |= board->black_pawns;
+		occupied_squares |= board->black_knights;
+		occupied_squares |= board->black_bishops;
+		occupied_squares |= board->black_rooks;
+		occupied_squares |= board->black_queens;
+		occupied_squares |= board->black_king;
+	}
 
 	return occupied_squares;
 }

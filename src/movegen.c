@@ -5,6 +5,7 @@
 
 #include "board.h"
 #include "movegen.h"
+#include "eval.h"
 
 static uint8_t min(const uint8_t a, const uint8_t b) {
 	return a < b ? a : b;
@@ -27,6 +28,8 @@ void add_move(MoveList* list, uint8_t from, uint8_t to) {
 		printf("Error: Move list overflow\n");
 		exit(1);
 	}
+
+	list->moves[list->count].mvv_lva_score = 0.0f;
 }
 
 Move get_move_from_string(const char* move) {
@@ -638,23 +641,53 @@ void get_king_moves(
 	if (
 			(rooks & (1ULL << starting_kings_rook)) 
 				&&
-			!(occupied & (1ULL << (starting_square_king + sign * 1)))
+			!(occupied & (1ULL << (starting_square_king + 1)))
 				&&
-			!(occupied & (1ULL << (starting_square_king + sign * 2)))
+			!(occupied & (1ULL << (starting_square_king + 2)))
 	   ) {
-		add_move(list, square, square + sign * 2);
+		add_move(list, square, square + 2);
 	}
 
 	if (
 			(rooks & (1ULL << starting_queens_rook)) 
 				&&
-			!(occupied & (1ULL << (starting_square_king + sign * -1)))
+			!(occupied & (1ULL << (starting_square_king - 1)))
 				&&
-			!(occupied & (1ULL << (starting_square_king + sign * -2)))
+			!(occupied & (1ULL << (starting_square_king - 2)))
 				&&
-			!(occupied & (1ULL << (starting_square_king + sign * -3)))
+			!(occupied & (1ULL << (starting_square_king - 3)))
 	   ) {
-		add_move(list, square, square + sign * -2);
+		add_move(list, square, square - 2);
+	}
+}
+
+static inline void swap(Move* a, Move* b) {
+	Move tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+
+static inline int partition(Move* moves, int low, int high) {
+	int pivot = moves[high].mvv_lva_score;
+	int i = low - 1;
+
+	for (int j = low; j <= high - 1; ++j) {
+		if (moves[j].mvv_lva_score >= pivot) {
+			++i;
+			swap(&moves[i], &moves[j]);
+		}
+	}
+
+	swap(&moves[i + 1], &moves[high]);
+	return i + 1;
+}
+
+static inline void quicksort(Move* moves, int low, int high) {
+	if (low < high) {
+		int pi = partition(moves, low, high);
+
+		quicksort(moves, low, pi - 1);
+		quicksort(moves, pi + 1, high);
 	}
 }
 
@@ -669,4 +702,13 @@ void get_legal_moves(
 	get_rook_moves(board, list, color);
 	get_queen_moves(board, list, color);
 	get_king_moves(board, list, color);
+
+	// Calc mvv lva
+	for (int idx = 0; idx < list->count; ++idx) {
+		calc_mvv_lva_score(board, &list->moves[idx]);
+	}
+
+	// Sort moves
+	quicksort(list->moves, 0, list->count - 1);
 }
+

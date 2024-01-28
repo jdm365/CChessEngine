@@ -1,8 +1,23 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "board.h"
 #include "eval.h"
+
+inline BitBoard get_pawn_attacks(BitBoard pawns, enum Color color) {
+	BitBoard left_attacks = 0;
+	BitBoard right_attacks = 0;
+	if (color == WHITE) {
+		left_attacks  = (pawns & ~FILE_A) << 7;
+		right_attacks = (pawns & ~FILE_H) << 9;
+	}
+	else if (color == BLACK) {
+		left_attacks  = (pawns & ~FILE_A) >> 9;
+		right_attacks = (pawns & ~FILE_H) >> 7;
+	}
+	return left_attacks | right_attacks;
+}
 
 
 float eval_pawns(const Board* board) {
@@ -22,6 +37,16 @@ float eval_pawns(const Board* board) {
 		black_pawns &= black_pawns - 1;
 		value -= PAWN_VALUE + 0.1f * PAWN_TABLE[FLIP_TABLE[square]];
 	}
+
+	// Supporting pawns bonus
+	BitBoard white_board = get_occupied_squares_color(board, WHITE);
+	BitBoard black_board = get_occupied_squares_color(board, BLACK);
+
+	BitBoard white_pawn_attacks = get_pawn_attacks(board->white_pawns, WHITE);
+	BitBoard black_pawn_attacks = get_pawn_attacks(board->black_pawns, BLACK);
+
+	value += 0.1f * __builtin_popcountll(white_pawn_attacks & white_board);
+	value -= 0.1f * __builtin_popcountll(black_pawn_attacks & black_board);
 
 	return value;
 }
@@ -174,4 +199,11 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 	printf("Nodes visited: %llu\n", nodes_visited);
 	printf("MNps: %f\n", (float)nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
 	return best_move;
+}
+
+void calc_mvv_lva_score(const Board* board, Move* move) {
+	enum Piece attacker = piece_at(board, move->from);
+	enum Piece victim   = piece_at(board, move->to);
+
+	move->mvv_lva_score = PIECE_VALUES[victim] - PIECE_VALUES[attacker];
 }

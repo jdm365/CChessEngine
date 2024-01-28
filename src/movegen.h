@@ -8,6 +8,7 @@
 typedef struct {
 	uint8_t from;
 	uint8_t to;
+	float mvv_lva_score;
 } Move;
 
 typedef struct {

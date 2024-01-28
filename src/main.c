@@ -21,19 +21,31 @@ int main() {
 	MoveList moves;
 
 	enum Color color = WHITE;
+	const uint8_t* keyboard_state = SDL_GetKeyboardState(NULL);
 	while (1) {
-		SDL_PumpEvents();
-
-		const uint8_t* keyboard_state = SDL_GetKeyboardState(NULL);
 
 		if (keyboard_state[SDL_SCANCODE_ESCAPE]) {
 			goto quit;
 		}
+		if (keyboard_state[SDL_SCANCODE_SPACE]) {
+			while (1) {
+				if (keyboard_state[SDL_SCANCODE_SPACE]) {
+					break;
+				}
+				if (keyboard_state[SDL_SCANCODE_ESCAPE]) {
+					goto quit;
+				}
+				SDL_PumpEvents();
+			}
+		}
+		SDL_PumpEvents();
 
 		gui_draw_board(&gui, &board);
 
-		Move best_move = get_best_move(&board, color, 5);
+		Move best_move = get_best_move(&board, color, 4);
 		_make_move(&board, best_move.from, best_move.to);
+		printf("\nMove: %s", translate_square_from_index(best_move.from));
+		printf("%s\n\n", translate_square_from_index(best_move.to));
 		reset_move_list(&moves);
 
 		if (game_over(&board)) {
@@ -48,6 +60,7 @@ int main() {
 		SDL_SetWindowTitle(gui.window, title);
 
 		color = !color;
+		// SDL_Delay(1000 / 60);
 		SDL_Delay(750);
 	}
 	quit:

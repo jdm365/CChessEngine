@@ -12,6 +12,16 @@ static const float ROOK_VALUE   = 5.0f;
 static const float QUEEN_VALUE  = 9.0f;
 static const float KING_VALUE   = 1000.0f;
 
+static const float PIECE_VALUES[7] = {
+	PAWN_VALUE,
+	KNIGHT_VALUE,
+	BISHOP_VALUE,
+	ROOK_VALUE,
+	QUEEN_VALUE,
+	KING_VALUE,
+	0.0f
+};
+
 static const float PAWN_TABLE[64] = {
 	0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,
 	0.5f, 1.0f, 1.0f,-2.0f,-2.0f,  1.0f, 1.0f, 0.5f,
@@ -35,7 +45,7 @@ static const float KNIGHT_TABLE[64] = {
 };
 
 static const float KING_TABLE[64] = {
-	4.0f, 6.0f, 2.0f, 0.0f, 0.0f, 2.0f, 6.0f, 4.0f,
+	4.0f, 6.0f, -1.0f, 0.0f, 0.0f, -1.0f, 6.0f, 4.0f,
 	4.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.0f, 4.0f,
 	-2.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-2.0f,
 	-4.0f,-6.0f,-6.0f,-8.0f,-8.0f,-6.0f,-6.0f,-4.0f,
@@ -72,3 +82,5 @@ float minimax(
 		);
 
 Move get_best_move(const Board* board, enum Color color, int depth);
+void calc_mvv_lva_score(const Board* board, Move* move);
+BitBoard get_pawn_attacks(BitBoard pawns, enum Color color);
