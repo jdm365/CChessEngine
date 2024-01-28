@@ -66,6 +66,8 @@ void _make_move(
 		uint8_t from_square, 
 		uint8_t to_square
 		);
+void _castle(Board* board, uint8_t from_square, uint8_t to_square);
 enum Color is_occupied_by(const Board* board, uint8_t square);
 enum ColoredPiece piece_at(const Board* board, uint8_t square);
 bool is_empty(const Board* board, uint8_t square);
+BitBoard get_occupied_squares(const Board* board);

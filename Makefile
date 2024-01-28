@@ -3,6 +3,7 @@ PROJECT_NAME = $(shell basename "$(realpath ./)")
 
 CXX = clang
 CXXFLAGS = -Wall -g -O3
+CXXFLAGS += -Wno-format
 OS = $(shell uname -s)
 ifeq ($(OS), Darwin)
 	LDFLAGS = -Xpreprocessor -fopenmp -lomp

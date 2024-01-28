@@ -536,7 +536,6 @@ void get_king_moves(
 		enum Color color
 		) {
 	if (__builtin_popcountll(board->white_king | board->black_king) != 2) {
-		// printf("no king left\n");
 		return;
 	}
 	uint8_t square;
@@ -622,6 +621,40 @@ void get_king_moves(
 		if (occupant != color) {
 			add_move(list, square, move);
 		}
+	}
+
+	// Check castling rights
+	uint8_t starting_square_king = (color == WHITE) ? 4 : 60;
+	if (square != starting_square_king) return;
+
+	uint8_t starting_queens_rook = (color == WHITE) ? 0 : 56;
+	uint8_t starting_kings_rook  = (color == WHITE) ? 7 : 63;
+
+	BitBoard rooks = (color == WHITE) ? board->white_rooks : board->black_rooks;
+	BitBoard occupied = get_occupied_squares(board);
+
+	int sign = (color == WHITE) ? 1 : -1;
+
+	if (
+			(rooks & (1ULL << starting_kings_rook)) 
+				&&
+			!(occupied & (1ULL << (starting_square_king + sign * 1)))
+				&&
+			!(occupied & (1ULL << (starting_square_king + sign * 2)))
+	   ) {
+		add_move(list, square, square + sign * 2);
+	}
+
+	if (
+			(rooks & (1ULL << starting_queens_rook)) 
+				&&
+			!(occupied & (1ULL << (starting_square_king + sign * -1)))
+				&&
+			!(occupied & (1ULL << (starting_square_king + sign * -2)))
+				&&
+			!(occupied & (1ULL << (starting_square_king + sign * -3)))
+	   ) {
+		add_move(list, square, square + sign * -2);
 	}
 }
 

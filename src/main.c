@@ -9,47 +9,12 @@
 #include "gui.h"
 
 
-
-void play_game(Board* board) {
-	char move[6];
-	MoveList moves;
-	init_move_list(&moves);
-
-	while (1) {
-		printf("Enter move: ");
-		scanf("%s", move);
-
-		get_legal_moves(board, &moves, WHITE);
-
-		Move m = get_move_from_string(move);
-		if (!is_move_legal(&moves, m)) {
-			printf("Illegal move\n");
-			printf("Legal moves:\n");
-			print_legal_moves(board, WHITE);
-			continue;
-		}
-		make_move(board, move);
-		reset_move_list(&moves);
-		print_board(board);
-
-		Move best_move = get_best_move(board, BLACK, 6);
-		_make_move(board, best_move.from, best_move.to);
-		reset_move_list(&moves);
-		printf("Made move: %s\n", get_string_from_move(best_move));
-
-		print_board(board);
-		printf("Eval: %f\n", eval_board(board));
-	}
-}
-
-
 int main() {
 
 	Board board;
 	init_board(&board);
 	populate_board_from_fen(&board, STARTING_FEN);
 
-	// play_game(&board);
 	struct GUI gui;
 	gui_init(&gui);
 
@@ -67,17 +32,23 @@ int main() {
 
 		gui_draw_board(&gui, &board);
 
-		Move best_move = get_best_move(&board, color, 6);
+		Move best_move = get_best_move(&board, color, 5);
 		_make_move(&board, best_move.from, best_move.to);
 		reset_move_list(&moves);
 
 		if (game_over(&board)) {
-			SDL_SetWindowTitle(gui.window, "Game Over");
+			printf("White kings remaining: %d\n", __builtin_popcountll(board.white_king));
+			printf("Black kings remaining: %d\n", __builtin_popcountll(board.black_king));
+			SDL_Delay(2500);
 			goto quit;
 		}
+		float eval = eval_board(&board);
+		char title[64];
+		sprintf(title, "Eval: %.2f", eval);
+		SDL_SetWindowTitle(gui.window, title);
 
 		color = !color;
-		SDL_Delay(250);
+		SDL_Delay(750);
 	}
 	quit:
 		gui_quit(&gui);

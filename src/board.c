@@ -265,7 +265,18 @@ void _make_move(
 		uint8_t from_square, 
 		uint8_t to_square
 		) {
-	// Make move on bitboards
+	// Check if castling
+	if (
+			(from_square == 4 || from_square == 60)
+				&& 
+			(abs(from_square - to_square) == 2)
+				&&
+			((board->white_king & (1ULL << from_square)) || (board->black_king & (1ULL << from_square)))
+		) {
+		_castle(board, from_square, to_square);
+		return;
+	}
+
 	uint64_t from_square_mask = (1ULL << from_square);
 	uint64_t to_square_mask   = (1ULL << to_square);
 
@@ -318,6 +329,13 @@ void _make_move(
 		print_board(board);
 		// print_bitboard(board->white_king);
 		exit(1);
+	}
+
+	// Check promotion
+	if (piece == WHITE_PAWN && to_square >= 56) {
+		piece = WHITE_QUEEN;
+	} else if (piece == BLACK_PAWN && to_square <= 7) {
+		piece = BLACK_QUEEN;
 	}
 
 	// Remove any pieces from to_square
@@ -378,6 +396,33 @@ void _make_move(
 		default:
 			printf("Invalid piece: %llu\n", (uint64_t)piece);
 			exit(1);
+	}
+}
+
+void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
+	uint64_t from_square_mask = (1ULL << from_square);
+	uint64_t to_square_mask   = (1ULL << to_square);
+
+	uint8_t rook_from_square = (to_square > from_square) ? to_square + 1 : to_square - 2;
+	uint8_t rook_to_square   = (to_square > from_square) ? to_square - 1 : to_square + 1;
+	bool is_white = (from_square == 4);
+
+	// Remove king from from_square and rook from appropriate square
+	// Guaranteed no pieces captured, so don't remove anything from to squares.
+
+	if (is_white) {
+		board->white_king &= ~from_square_mask;
+		board->white_rooks &= ~(1ULL << rook_from_square);
+
+		board->white_king |= to_square_mask;
+		board->white_rooks |= (1ULL << rook_to_square);
+	} 
+	else {
+		board->black_king &= ~from_square_mask;
+		board->black_rooks &= ~(1ULL << rook_from_square);
+
+		board->black_king |= to_square_mask;
+		board->black_rooks |= (1ULL << rook_to_square);
 	}
 }
 
@@ -443,4 +488,24 @@ enum ColoredPiece piece_at(const Board* board, uint8_t square) {
 
 bool is_empty(const Board* board, uint8_t square) {
 	return is_occupied_by(board, square) == EMPTY;
+}
+
+BitBoard get_occupied_squares(const Board* board) {
+	BitBoard occupied_squares = 0;
+
+	occupied_squares |= board->white_pawns;
+	occupied_squares |= board->white_knights;
+	occupied_squares |= board->white_bishops;
+	occupied_squares |= board->white_rooks;
+	occupied_squares |= board->white_queens;
+	occupied_squares |= board->white_king;
+
+	occupied_squares |= board->black_pawns;
+	occupied_squares |= board->black_knights;
+	occupied_squares |= board->black_bishops;
+	occupied_squares |= board->black_rooks;
+	occupied_squares |= board->black_queens;
+	occupied_squares |= board->black_king;
+
+	return occupied_squares;
 }

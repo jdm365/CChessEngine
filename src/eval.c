@@ -2,28 +2,88 @@
 #include <time.h>
 
 #include "board.h"
-#include "movegen.h"
 #include "eval.h"
 
+
+float eval_pawns(const Board* board) {
+	float value = 0.0f;
+
+	BitBoard white_pawns = board->white_pawns;
+	BitBoard black_pawns = board->black_pawns;
+
+	while (white_pawns) {
+		uint8_t square = __builtin_ctzll(white_pawns);
+		white_pawns &= white_pawns - 1;
+		value += PAWN_VALUE + 0.1f * PAWN_TABLE[square];
+	}
+
+	while (black_pawns) {
+		uint8_t square = __builtin_ctzll(black_pawns);
+		black_pawns &= black_pawns - 1;
+		value -= PAWN_VALUE + 0.1f * PAWN_TABLE[FLIP_TABLE[square]];
+	}
+
+	return value;
+}
+
+float eval_knights(const Board* board) {
+	float value = 0.0f;
+
+	BitBoard white_knights = board->white_knights;
+	BitBoard black_knights = board->black_knights;
+
+	while (white_knights) {
+		uint8_t square = __builtin_ctzll(white_knights);
+		white_knights &= white_knights - 1;
+		value += KNIGHT_VALUE + 0.1f * KNIGHT_TABLE[square];
+	}
+
+	while (black_knights) {
+		uint8_t square = __builtin_ctzll(black_knights);
+		black_knights &= black_knights - 1;
+		value -= KNIGHT_VALUE + 0.1f * KNIGHT_TABLE[FLIP_TABLE[square]];
+	}
+
+	return value;
+}
+
+float eval_kings(const Board* board) {
+	float value = 0.0f;
+
+	BitBoard white_king = board->white_king;
+	BitBoard black_king = board->black_king;
+
+	while (white_king) {
+		uint8_t square = __builtin_ctzll(white_king);
+		white_king &= white_king - 1;
+		value += KING_VALUE + 0.1f * KING_TABLE[square];
+	}
+
+	while (black_king) {
+		uint8_t square = __builtin_ctzll(black_king);
+		black_king &= black_king - 1;
+		value -= KING_VALUE + 0.1f * KING_TABLE[FLIP_TABLE[square]];
+	}
+
+	return value;
+}
 
 float eval_board(const Board* board) {
 	float eval = 0.0f;
 
+	eval += eval_pawns(board);
+	eval += eval_knights(board);
+	eval += eval_kings(board);
+
 	// White
-	eval += PAWN_VALUE   * __builtin_popcountll(board->white_pawns);
-	eval += KNIGHT_VALUE * __builtin_popcountll(board->white_knights);
 	eval += BISHOP_VALUE * __builtin_popcountll(board->white_bishops);
 	eval += ROOK_VALUE   * __builtin_popcountll(board->white_rooks);
 	eval += QUEEN_VALUE  * __builtin_popcountll(board->white_queens);
-	eval += KING_VALUE   * __builtin_popcountll(board->white_king);
 
 	// Black
-	eval -= PAWN_VALUE   * __builtin_popcountll(board->black_pawns);
-	eval -= KNIGHT_VALUE * __builtin_popcountll(board->black_knights);
 	eval -= BISHOP_VALUE * __builtin_popcountll(board->black_bishops);
 	eval -= ROOK_VALUE   * __builtin_popcountll(board->black_rooks);
 	eval -= QUEEN_VALUE  * __builtin_popcountll(board->black_queens);
-	eval -= KING_VALUE   * __builtin_popcountll(board->black_king);
 	return eval;
 }
 

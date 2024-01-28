@@ -7,6 +7,10 @@
 
 #include "board.h"
 
+static const int WINDOW_WIDTH  = 600;
+static const int WINDOW_HEIGHT = 600;
+static const int SQUARE_SIZE = WINDOW_WIDTH / 8;
+
 SDL_Texture* load_texture(
 		SDL_Renderer* renderer, 
 		const char* path
@@ -25,8 +29,8 @@ void gui_init(struct GUI* gui) {
 			"Chess", 
 			SDL_WINDOWPOS_UNDEFINED, 
 			SDL_WINDOWPOS_UNDEFINED, 
-			800, 
-			800, 
+			WINDOW_WIDTH,
+			WINDOW_HEIGHT,
 			SDL_WINDOW_SHOWN
 			);
 	gui->renderer = SDL_CreateRenderer(
@@ -102,12 +106,12 @@ void gui_draw_board(struct GUI* gui, Board* board) {
 	SDL_RenderClear(gui->renderer);
 
 	SDL_Rect rect;
-	rect.w = 100;
-	rect.h = 100;
+	rect.w = SQUARE_SIZE;
+	rect.h = SQUARE_SIZE;
 	for (int i = 0; i < 8; ++i) {
-		rect.y = i * 100;
+		rect.y = i * SQUARE_SIZE;
 		for (int j = 0; j < 8; ++j) {
-			rect.x = j * 100;
+			rect.x = j * SQUARE_SIZE;
 			if ((i + j) % 2 == 0) {
 				SDL_SetRenderDrawColor(
 						gui->renderer, 
