@@ -5,70 +5,28 @@
 
 static const float INF = 1000000.0f;
 
-static const float PAWN_VALUE   = 1.0f;
-static const float KNIGHT_VALUE = 3.0f;
-static const float BISHOP_VALUE = 3.0f;
-static const float ROOK_VALUE   = 5.0f;
-static const float QUEEN_VALUE  = 9.0f;
-static const float KING_VALUE   = 1000.0f;
+extern const float PAWN_VALUE;
+extern const float KNIGHT_VALUE;
+extern const float BISHOP_VALUE;
+extern const float ROOK_VALUE;
+extern const float QUEEN_VALUE;
+extern const float KING_VALUE;
 
-static const float PIECE_VALUES[7] = {
-	PAWN_VALUE,
-	KNIGHT_VALUE,
-	BISHOP_VALUE,
-	ROOK_VALUE,
-	QUEEN_VALUE,
-	KING_VALUE,
-	0.0f
-};
+extern const float PIECE_VALUES[7];
 
-static const float PAWN_TABLE[64] = {
-	0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f,
-	0.5f, 1.0f, 1.0f,-2.0f,-2.0f,  1.0f, 1.0f, 0.5f,
-	0.5f,-0.5f,-1.0f, 0.0f, 0.0f, -1.0f,-0.5f, 0.5f,
-	0.0f, 0.0f, 0.0f, 2.0f, 2.0f,  0.0f, 0.0f, 0.0f,
-	0.5f, 0.5f, 1.0f, 3.0f, 3.0f,  1.0f, 0.5f, 0.5f,
-	1.0f, 1.0f, 2.0f, 3.5f, 3.5f,  2.0f, 1.0f, 1.0f,
-	5.0f, 5.0f, 5.0f, 5.0f, 5.0f,  5.0f, 5.0f, 5.0f,
-	0.0f, 0.0f, 0.0f, 0.0f, 0.0f,  0.0f, 0.0f, 0.0f
-};
+extern const float PAWN_TABLE[64];
+extern const float KNIGHT_TABLE[64];
+extern const float BISHOP_TABLE[64];
+extern const float ROOK_TABLE[64];
+extern const float QUEEN_TABLE[64];
+extern const float KING_TABLE[64];
+extern const float KING_TABLE_ENDGAME[64];
 
-static const float KNIGHT_TABLE[64] = {
-	-5.0f,-4.0f,-3.0f,-3.0f,-3.0f,-3.0f,-4.0f,-5.0f,
-	-4.0f,-2.0f, 0.0f, 0.0f, 0.0f, 0.0f,-2.0f,-4.0f,
-	-3.0f, 0.0f, 1.0f, 1.5f, 1.5f, 1.0f, 0.0f,-3.0f,
-	-3.0f, 0.5f, 1.5f, 2.0f, 2.0f, 1.5f, 0.5f,-3.0f,
-	-3.0f, 0.0f, 1.5f, 2.0f, 2.0f, 1.5f, 0.0f,-3.0f,
-	-3.0f, 0.5f, 1.0f, 1.5f, 1.5f, 1.0f, 0.5f,-3.0f,
-	-4.0f,-2.0f, 0.0f, 0.5f, 0.5f, 0.0f,-2.0f,-4.0f,
-	-5.0f,-4.0f,-3.0f,-3.0f,-3.0f,-3.0f,-4.0f,-5.0f
-};
-
-static const float KING_TABLE[64] = {
-	4.0f, 6.0f, -1.0f, 0.0f, 0.0f, -1.0f, 6.0f, 4.0f,
-	4.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.0f, 4.0f,
-	-2.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-2.0f,
-	-4.0f,-6.0f,-6.0f,-8.0f,-8.0f,-6.0f,-6.0f,-4.0f,
-	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f,
-	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f,
-	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f,
-	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f
-};
-
-static const uint8_t FLIP_TABLE[64] = {
-	56, 57, 58, 59, 60, 61, 62, 63,
-	48, 49, 50, 51, 52, 53, 54, 55,
-	40, 41, 42, 43, 44, 45, 46, 47,
-	32, 33, 34, 35, 36, 37, 38, 39,
-	24, 25, 26, 27, 28, 29, 30, 31,
-	16, 17, 18, 19, 20, 21, 22, 23,
-	 8,  9, 10, 11, 12, 13, 14, 15,
-	 0,  1,  2,  3,  4,  5,  6,  7
-};
-
+extern const uint8_t FLIP_TABLE[64];
 
 float eval_pawns(const Board* board);
 float eval_knights(const Board* board);
+float eval_queens(const Board* board);
 float eval_kings(const Board* board);
 float eval_board(const Board* board);
 float minimax(

@@ -13,10 +13,16 @@ static uint8_t min(const uint8_t a, const uint8_t b) {
 
 void init_move_list(MoveList* list) {
 	list->count = 0;
+	for (int idx = 0; idx < 267; ++idx) {
+		list->moves[idx].mvv_lva_score = 0.0f;
+	}
 }
 
 void reset_move_list(MoveList* list) {
 	list->count = 0;
+	for (int idx = 0; idx < 267; ++idx) {
+		list->moves[idx].mvv_lva_score = 0.0f;
+	}
 }
 
 void add_move(MoveList* list, uint8_t from, uint8_t to) {
@@ -96,14 +102,15 @@ void get_pawn_moves_piece(
 	uint8_t one_forward = square + (color == WHITE ? 8 : -8);
 	if (is_empty(board, one_forward)) {
 		add_move(list, square, one_forward);
-	}
 
-	if (is_starting_rank) {
-		uint8_t two_forward = square + (color == WHITE ? 16 : -16);
-		if (is_empty(board, two_forward)) {
-			add_move(list, square, two_forward);
+		if (is_starting_rank) {
+			uint8_t two_forward = square + (color == WHITE ? 16 : -16);
+			if (is_empty(board, two_forward)) {
+				add_move(list, square, two_forward);
+			}
 		}
 	}
+
 
 	// Captures
 	bool can_capture_left  = (file > 0);
@@ -635,8 +642,6 @@ void get_king_moves(
 
 	BitBoard rooks = (color == WHITE) ? board->white_rooks : board->black_rooks;
 	BitBoard occupied = get_occupied_squares(board);
-
-	int sign = (color == WHITE) ? 1 : -1;
 
 	if (
 			(rooks & (1ULL << starting_kings_rook)) 
