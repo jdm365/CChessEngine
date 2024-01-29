@@ -311,6 +311,53 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 	return best_move;
 }
 
+
+Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
+    MoveList moves;
+    init_move_list(&moves);
+    get_legal_moves(board, &moves, color);
+
+    Move  best_move = moves.moves[0];
+    float best_score;
+    uint64_t nodes_visited = 0;
+
+    clock_t start = clock();
+
+    for (int depth = 1; depth <= max_depth; ++depth) {
+        best_score = -INF;
+
+        for (int idx = 0; idx < moves.count; ++idx) {
+            ++nodes_visited;
+
+            Move move = moves.moves[idx];
+            Board new_board = *board;
+            _make_move(&new_board, move.from, move.to);
+            float score = -minimax(
+                &new_board, 
+                !color, 
+                1, 
+                depth, 
+                -INF, 
+                INF,
+                &nodes_visited
+            );
+
+            if (score > best_score) {
+                best_score = score;
+                best_move = move;
+            }
+        }
+
+        // Optional: Check time or other stopping criteria to break early
+        // if (time_elapsed(start) > time_limit) break;
+    }
+
+    printf("KNodes visited: %llu\n", nodes_visited / 1000);
+    printf("MNps: %f\n", (float)nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
+
+    return best_move;
+}
+
 void calc_mvv_lva_score(const Board* board, Move* move) {
 	enum Piece attacker = piece_at(board, move->from);
 	enum Piece victim   = piece_at(board, move->to);
