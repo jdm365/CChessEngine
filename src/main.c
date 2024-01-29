@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -54,7 +55,7 @@ void play_self_with_gui() {
 		gui_quit(&gui);
 }
 
-void play_against_engine() {
+void play_against_engine(int max_depth) {
 	Board board;
 	init_board(&board);
 	populate_board_from_fen(&board, STARTING_FEN);
@@ -71,19 +72,31 @@ void play_against_engine() {
 		if (keyboard_state[SDL_SCANCODE_ESCAPE]) {
 			goto quit;
 		}
-		gui_handle_player_loop(&gui, &board);
-
+		bool _quit = gui_handle_player_loop(&gui, &board);
+		if (_quit) {
+			goto quit;
+		}
 		gui_draw_board(&gui, &board, 64);
 
-		Move best_move = get_best_move(&board, BLACK, 6);
+		Move best_move = get_best_move(&board, BLACK, max_depth);
 		_make_move(&board, best_move.from, best_move.to);
 		printf("\nMove: %s", translate_square_from_index(best_move.from));
 		printf("%s\n\n", translate_square_from_index(best_move.to));
 		reset_move_list(&moves);
 
+		gui_draw_board(&gui, &board, 64);
+
 		if (game_over(&board)) {
-			printf("White kings remaining: %d\n", __builtin_popcountll(board.white_king));
-			printf("Black kings remaining: %d\n", __builtin_popcountll(board.black_king));
+			if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
+				SDL_SetWindowTitle(gui.window, "Game Over - White Wins");
+			} 
+			else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
+				SDL_SetWindowTitle(gui.window, "Game Over - Black Wins");
+			} 
+			else {
+				SDL_SetWindowTitle(gui.window, "Game Over - Draw");
+			}
+
 			SDL_Delay(2500);
 			goto quit;
 		}
@@ -92,14 +105,16 @@ void play_against_engine() {
 		sprintf(title, "Eval: %.2f", eval);
 		SDL_SetWindowTitle(gui.window, title);
 
-		SDL_Delay(750);
+		SDL_Delay(250);
 	}
 	quit:
 		gui_quit(&gui);
 }
 
 int main() {
+	const int MAX_DEPTH = 6;
+
 	// play_self_with_gui();
-	play_against_engine();
+	play_against_engine(MAX_DEPTH);
 	return 0;
 }

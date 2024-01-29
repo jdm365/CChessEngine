@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "board.h"
 #include "gui.h"
@@ -171,7 +172,7 @@ void gui_quit(struct GUI* gui) {
 	SDL_Quit();
 }
 
-void gui_handle_player_loop(struct GUI* gui, Board* board) {
+bool gui_handle_player_loop(struct GUI* gui, Board* board) {
 	SDL_Event event;
 
 	uint8_t num_clicks = 0;
@@ -186,7 +187,7 @@ void gui_handle_player_loop(struct GUI* gui, Board* board) {
 	while (1) {
 		while (SDL_PollEvent(&event) != 0) {
 			if (event.type == SDL_QUIT) {
-				gui_quit(gui);
+				return true;
 			}
 
 			// Detect mouse click
@@ -202,6 +203,12 @@ void gui_handle_player_loop(struct GUI* gui, Board* board) {
 						++num_clicks;
 					} 
 					else if (num_clicks == 1) {
+						if (square == src_square) {
+							src_square = 64;
+							num_clicks = 0;
+							continue;
+						}
+
 						dst_square = square;
 						++num_clicks;
 						goto make_move;
@@ -211,6 +218,8 @@ void gui_handle_player_loop(struct GUI* gui, Board* board) {
 				continue;
 			}
 			gui_draw_board(gui, board, src_square);
+
+			SDL_Delay(10);
 			continue;
 
 			make_move: {
@@ -218,7 +227,7 @@ void gui_handle_player_loop(struct GUI* gui, Board* board) {
 
 				if (is_move_legal(&moves, move)) {
 					_make_move(board, move.from, move.to);
-					return;
+					return false;
 				}
 				printf("Illegal move!\n");
 				printf("Move: %s", translate_square_from_index(move.from));
