@@ -92,6 +92,3 @@ enum Piece piece_at(const Board* board, uint8_t square);
 bool is_empty(const Board* board, uint8_t square);
 BitBoard get_occupied_squares(const Board* board);
 BitBoard get_occupied_squares_color(const Board* board, enum Color color);
-
-// Zobrist hashing
-extern uint64_t zobrist_table[64][12];
