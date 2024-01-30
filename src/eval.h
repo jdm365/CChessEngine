@@ -26,6 +26,8 @@ extern const uint8_t FLIP_TABLE[64];
 
 float eval_pawns(const Board* board);
 float eval_knights(const Board* board);
+float eval_bishops(const Board* board);
+float eval_rooks(const Board* board);
 float eval_queens(const Board* board);
 float eval_kings(const Board* board);
 float eval_board(const Board* board);

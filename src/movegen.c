@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "board.h"
 #include "movegen.h"
@@ -696,6 +697,22 @@ static inline void quicksort(Move* moves, int low, int high) {
 	}
 }
 
+static inline void insertion_sort(Move* moves, int n) {
+    for (int i = 1; i < n; i++) {
+        Move key = moves[i];
+        int j = i - 1;
+
+        // Move elements of moves[0..i-1], that are
+        // less than key, to one position ahead of their current position
+        while (j >= 0 && moves[j].mvv_lva_score < key.mvv_lva_score) {
+            moves[j + 1] = moves[j];
+            j = j - 1;
+        }
+        moves[j + 1] = key;
+    }
+}
+
+
 void get_legal_moves(
 		const Board* board,
 		MoveList* list,
@@ -714,6 +731,48 @@ void get_legal_moves(
 	}
 
 	// Sort moves
-	quicksort(list->moves, 0, list->count - 1);
+	// quicksort(list->moves, 0, list->count - 1);
+	insertion_sort(list->moves, list->count);
 }
 
+static void search_legal_moves(
+		const Board* board,
+		enum Color color,
+		int max_depth,
+		uint64_t* nodes_visited
+		) {
+	if (max_depth == 0) return;
+
+	MoveList list;
+	init_move_list(&list);
+	get_legal_moves(board, &list, color);
+
+	for (int idx = 0; idx < list.count; ++idx) {
+		++(*nodes_visited);
+
+		Move move = list.moves[idx];
+		Board new_board = *board;
+		_make_move(&new_board, move.from, move.to);
+
+		search_legal_moves(&new_board, !color, max_depth - 1, nodes_visited);
+	}
+}
+
+void perf_test(int max_depth) {
+	Board board;
+	init_board(&board);
+	populate_board_from_fen(&board, STARTING_FEN);
+
+    uint64_t nodes_visited = 0;
+
+	clock_t start = clock();
+	search_legal_moves(&board, WHITE, max_depth, &nodes_visited);
+	clock_t end = clock();
+
+	double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
+	printf("=====================================================\n");
+	printf("Time spent: %f\n", time_spent);
+	printf("Nodes visited: %llu\n", nodes_visited);
+	printf("MN/s: %f\n", nodes_visited / time_spent / 1000000);
+	printf("=====================================================\n");
+}

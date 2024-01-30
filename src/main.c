@@ -87,7 +87,9 @@ void play_against_engine(int max_depth) {
 		if (_quit) {
 			goto quit;
 		}
+
 		gui_draw_board(&gui, &board, 64);
+		SDL_Delay(750);
 
 		Move best_move = get_best_move(&board, BLACK, max_depth);
 		_make_move(&board, best_move.from, best_move.to);
@@ -115,17 +117,16 @@ void play_against_engine(int max_depth) {
 		char title[64];
 		sprintf(title, "Eval: %.2f", eval);
 		SDL_SetWindowTitle(gui.window, title);
-
-		SDL_Delay(250);
 	}
 	quit:
 		gui_quit(&gui);
 }
 
 int main() {
-	const int MAX_DEPTH = 4;
+	const int MAX_DEPTH = 7;
 
-	play_self_with_gui(MAX_DEPTH);
+	perf_test(MAX_DEPTH);
+	// play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 	return 0;
 }

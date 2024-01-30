@@ -36,12 +36,34 @@ const float PAWN_TABLE[64] = {
 const float KNIGHT_TABLE[64] = {
 	-5.0f,-4.0f,-3.0f,-3.0f,-3.0f,-3.0f,-4.0f,-5.0f,
 	-4.0f,-2.0f, 0.0f, 0.0f, 0.0f, 0.0f,-2.0f,-4.0f,
-	-3.0f, 0.0f, 1.0f, 1.5f, 1.5f, 1.0f, 0.0f,-3.0f,
+	-4.0f, 0.0f, 1.0f, 1.5f, 1.5f, 1.0f, 0.0f,-4.0f,
 	-3.0f, 0.5f, 1.5f, 2.0f, 2.0f, 1.5f, 0.5f,-3.0f,
 	-3.0f, 0.0f, 1.5f, 2.5f, 2.5f, 1.5f, 0.0f,-3.0f,
 	-1.0f, 1.5f, 2.0f, 3.5f, 3.5f, 2.0f, 1.5f,-1.0f,
 	 0.0f, 2.0f, 0.0f, 0.5f, 0.5f, 0.0f, 2.0f, 0.0f,
 	-5.0f,-4.0f,-3.0f,-3.0f,-3.0f,-3.0f,-4.0f,-5.0f
+};
+
+const float BISHOP_TABLE[64] = {
+	-2.0f,-1.0f,-1.0f,-1.0f,-1.0f,-1.0f,-1.0f,-2.0f,
+	-1.0f, 2.0f, 0.0f, 0.0f, 0.0f, 0.0f, 2.0f,-1.0f,
+	-1.0f, 0.0f, 0.5f, 1.0f, 1.0f, 0.5f, 0.0f,-1.0f,
+	-1.0f, 0.5f, 0.5f, 1.0f, 1.0f, 0.5f, 0.5f,-1.0f,
+	-1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f,-1.0f,
+	-1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,-0.0f,-1.0f,
+	-1.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f,-1.0f,
+	-2.0f, 0.0f,-1.0f,-1.0f,-1.0f,-1.0f,-0.0f,-2.0f
+};
+
+const float ROOK_TABLE[64] = {
+	-1.0f, 0.0f, 1.0f, 3.0f, 2.0f, 1.0f, 2.0f,-1.0f,
+	-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,-0.0f,-0.5f,
+	-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,-0.0f,-0.5f,
+	-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,-0.0f,-0.5f,
+	-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,-0.0f,-0.5f,
+	-0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,-0.0f,-0.5f,
+	0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,-0.0f, 0.5f,
+	0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f,-0.0f, 0.0f
 };
 
 const float QUEEN_TABLE[64] = {
@@ -56,7 +78,7 @@ const float QUEEN_TABLE[64] = {
 };
 
 const float KING_TABLE[64] = {
-	4.0f, 6.0f, -1.0f, 0.0f, 0.0f, -1.0f, 6.0f, 4.0f,
+	4.0f, 6.0f, 4.0f, 0.0f, 0.0f, -1.0f, 6.0f, 4.0f,
 	4.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.0f, 4.0f,
 	-2.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-2.0f,
 	-4.0f,-6.0f,-6.0f,-8.0f,-8.0f,-6.0f,-6.0f,-4.0f,
@@ -69,12 +91,12 @@ const float KING_TABLE[64] = {
 const float KING_TABLE_ENDGAME[64] = {
 	-5.0f,-4.0f,-3.0f,-2.0f,-2.0f,-3.0f,-4.0f,-5.0f,
 	-3.0f,-2.0f,-1.0f, 0.0f, 0.0f,-1.0f,-2.0f,-3.0f,
-	-3.0f,-1.0f, 2.0f, 3.0f, 3.0f, 2.0f,-1.0f,-3.0f,
-	-3.0f,-1.0f, 3.0f, 4.0f, 4.0f, 3.0f,-1.0f,-3.0f,
-	-3.0f,-1.0f, 3.0f, 4.0f, 4.0f, 3.0f,-1.0f,-3.0f,
-	-3.0f,-1.0f, 2.0f, 3.0f, 3.0f, 2.0f,-1.0f,-3.0f,
-	-3.0f,-3.0f, 0.0f, 0.0f, 0.0f, 0.0f,-3.0f,-3.0f,
-	-5.0f,-3.0f,-3.0f,-3.0f,-3.0f,-3.0f,-3.0f,-5.0f
+	-1.0f,-1.0f, 2.0f, 2.0f, 2.0f, 2.0f,-1.0f,-1.0f,
+	 1.0f, 1.0f, 3.0f, 4.0f, 4.0f, 3.0f, 1.0f, 1.0f,
+	 1.0f,1.0f, 3.0f, 4.0f, 4.0f, 3.0f,1.0f,1.0f,
+	 1.0f,1.0f, 2.0f, 3.0f, 3.0f, 2.0f,1.0f,1.0f,
+	 1.0f,1.0f, 2.0f, 2.0f, 2.0f, 2.0f, 1.0f,1.0f,
+	-1.0f,-1.0f,-1.0f,-1.0f,-1.0f,-1.0f, -1.0f,-1.0f
 };
 
 const uint8_t FLIP_TABLE[64] = {
@@ -87,6 +109,132 @@ const uint8_t FLIP_TABLE[64] = {
 	 8,  9, 10, 11, 12, 13, 14, 15,
 	 0,  1,  2,  3,  4,  5,  6,  7
 };
+
+
+static uint8_t get_diagonal_range(BitBoard movers, BitBoard blockers) {
+	uint8_t range_sum = 0;
+	while (movers) {
+		uint8_t square = __builtin_ctzll(movers);
+		movers &= movers - 1;
+
+		// Get range of bishop
+		uint8_t range = 0;
+
+		uint8_t rank = square / 8;
+		uint8_t file = square % 8;
+		uint8_t start_rank = rank;
+		uint8_t start_file = file;
+
+		while (rank < 7 && file < 7) {
+			++rank;
+			++file;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (rank > 0 && file < 7) {
+			--rank;
+			++file;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (rank < 7 && file > 0) {
+			++rank;
+			--file;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (rank > 0 && file > 0) {
+			--rank;
+			--file;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+		range_sum += range;
+	}
+	return range_sum;
+}
+
+static uint8_t get_straight_range(BitBoard movers, BitBoard blockers) {
+	uint8_t range_sum = 0;
+
+	while (movers) {
+		uint8_t square = __builtin_ctzll(movers);
+		movers &= movers - 1;
+
+		// Get range of rook 
+		uint8_t range = 0;
+
+		uint8_t rank = square / 8;
+		uint8_t file = square % 8;
+		uint8_t start_rank = rank;
+		uint8_t start_file = file;
+
+		while (rank < 7) {
+			++rank;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (file < 7) {
+			++file;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (rank > 0) {
+			--rank;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (file > 0) {
+			--file;
+			if (blockers & (1ULL << (8 * rank + file))) {
+				break;
+			}
+			++range;
+		}
+
+		range_sum += range;
+	}
+
+	return range_sum;
+}
 
 inline BitBoard get_pawn_attacks(BitBoard pawns, enum Color color) {
 	BitBoard left_attacks = 0;
@@ -160,6 +308,38 @@ float eval_knights(const Board* board) {
 	return value;
 }
 
+
+float eval_bishops(const Board* board) {
+	float value = 0.0f;
+
+	BitBoard white_bishops = board->white_bishops;
+	BitBoard black_bishops = board->black_bishops;
+
+	BitBoard occupied = get_occupied_squares(board);
+
+	uint8_t white_bishops_range_sum = get_diagonal_range(white_bishops, occupied);
+	uint8_t black_bishops_range_sum = get_diagonal_range(black_bishops, occupied);
+
+	value += 0.1f * (white_bishops_range_sum - black_bishops_range_sum);
+	return value;
+}
+
+float eval_rooks(const Board* board) {
+	float value = 0.0f;
+
+	BitBoard white_rooks = board->white_rooks;
+	BitBoard black_rooks = board->black_rooks;
+
+	BitBoard occupied = get_occupied_squares(board);
+
+	value += 0.05f * (__builtin_popcountll(white_rooks) - __builtin_popcountll(black_rooks));
+	uint8_t white_rooks_range_sum = get_straight_range(white_rooks, occupied);
+	uint8_t black_rooks_range_sum = get_straight_range(black_rooks, occupied);
+
+	value += 0.05f * (white_rooks_range_sum - black_rooks_range_sum);
+	return value;
+}
+
 float eval_queens(const Board* board) {
 	float value = 0.0f;
 
@@ -209,16 +389,11 @@ float eval_board(const Board* board) {
 
 	eval += eval_pawns(board);
 	eval += eval_knights(board);
+	eval += eval_bishops(board);
+	eval += eval_rooks(board);
 	eval += eval_queens(board);
 	eval += eval_kings(board);
 
-	// White
-	eval += BISHOP_VALUE * __builtin_popcountll(board->white_bishops);
-	eval += ROOK_VALUE   * __builtin_popcountll(board->white_rooks);
-
-	// Black
-	eval -= BISHOP_VALUE * __builtin_popcountll(board->black_bishops);
-	eval -= ROOK_VALUE   * __builtin_popcountll(board->black_rooks);
 	return eval;
 }
 
@@ -306,7 +481,7 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 		}
 	}
 
-	printf("Nodes visited: %llu\n", nodes_visited);
+	printf("KNodes visited: %llu\n", nodes_visited / 1000);
 	printf("MNps: %f\n", (float)nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
 	return best_move;
 }
