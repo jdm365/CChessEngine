@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <immintrin.h>
 
 #include "board.h"
 
@@ -26,6 +27,120 @@ const uint64_t RANK_6 = 0x0000FF0000000000;
 const uint64_t RANK_7 = 0x00FF000000000000;
 const uint64_t RANK_8 = 0xFF00000000000000;
 
+uint64_t PAWN_MOVES[2][64];
+uint64_t PAWN_ATTACKS[2][64];
+uint64_t KNIGHT_MOVES[64];
+uint64_t KING_MOVES[64];
+
+void init_pawn_moves() {
+	for (int square = 0; square < 64; square++) {
+		uint64_t white_moves = 0;
+		uint64_t white_attacks = 0;
+		uint64_t black_moves = 0;
+		uint64_t black_attacks = 0;
+
+		int rank = square / 8;
+		int file = square % 8;
+
+		if (rank == 1) {
+			white_moves |= (1ULL << (square + 8));
+			white_moves |= (1ULL << (square + 16));
+		} else if (rank < 7) {
+			white_moves |= (1ULL << (square + 8));
+		} else {
+			white_moves = 0;
+		}
+
+		if (rank == 6) {
+			black_moves |= (1ULL << (square - 8));
+			black_moves |= (1ULL << (square - 16));
+		} else if (rank > 0) {
+			black_moves |= (1ULL << (square - 8));
+		} else {
+			black_moves = 0;
+		}
+
+		if (file > 0) {
+			white_attacks |= (1ULL << (square + 7));
+			black_attacks |= (1ULL << (square - 9));
+		}
+		if (file < 7) {
+			white_attacks |= (1ULL << (square + 9));
+			black_attacks |= (1ULL << (square - 7));
+		}
+
+		PAWN_MOVES[WHITE][square] = white_moves;
+		PAWN_MOVES[BLACK][square] = black_moves;
+		PAWN_ATTACKS[WHITE][square] = white_attacks;
+		PAWN_ATTACKS[BLACK][square] = black_attacks;
+	}
+}
+
+void init_knight_moves() {
+	for (int square = 0; square < 64; square++) {
+		uint64_t knight_moves = 0;
+		int rank = square / 8;
+		int file = square % 8;
+		if (rank >= 2 && file >= 1) {
+			knight_moves |= (1ULL << (square - 10));
+		}
+		if (rank >= 2 && file <= 6) {
+			knight_moves |= (1ULL << (square - 6));
+		}
+		if (rank >= 1 && file >= 2) {
+			knight_moves |= (1ULL << (square - 17));
+		}
+		if (rank >= 1 && file <= 5) {
+			knight_moves |= (1ULL << (square - 15));
+		}
+		if (rank <= 6 && file >= 1) {
+			knight_moves |= (1ULL << (square + 6));
+		}
+		if (rank <= 6 && file <= 6) {
+			knight_moves |= (1ULL << (square + 10));
+		}
+		if (rank <= 5 && file >= 2) {
+			knight_moves |= (1ULL << (square + 15));
+		}
+		if (rank <= 5 && file <= 5) {
+			knight_moves |= (1ULL << (square + 17));
+		}
+		KNIGHT_MOVES[square] = knight_moves;
+	}
+}
+
+void init_king_moves() {
+	for (int square = 0; square < 64; square++) {
+		uint64_t king_moves = 0;
+		int rank = square / 8;
+		int file = square % 8;
+		if (rank >= 1 && file >= 1) {
+			king_moves |= (1ULL << (square - 9));
+		}
+		if (rank >= 1) {
+			king_moves |= (1ULL << (square - 8));
+		}
+		if (rank >= 1 && file <= 6) {
+			king_moves |= (1ULL << (square - 7));
+		}
+		if (file >= 1) {
+			king_moves |= (1ULL << (square - 1));
+		}
+		if (file <= 6) {
+			king_moves |= (1ULL << (square + 1));
+		}
+		if (rank <= 6 && file >= 1) {
+			king_moves |= (1ULL << (square + 7));
+		}
+		if (rank <= 6) {
+			king_moves |= (1ULL << (square + 8));
+		}
+		if (rank <= 6 && file <= 6) {
+			king_moves |= (1ULL << (square + 9));
+		}
+		KING_MOVES[square] = king_moves;
+	}
+}
 
 void init_board(Board* board) {
 	board->white_pawns   = 0;
@@ -47,6 +162,9 @@ void set_bit(BitBoard* board, int index) {
 	*board |= (1ULL << index);
 }
 
+inline BitBoard* get_bitboard_by_index(const Board* board, int index) {
+	return (BitBoard*)board + index;
+}
 
 uint8_t translate_square_from_char(const char* square) {
 	char file = square[0];
@@ -286,6 +404,15 @@ void _make_move(
 		uint8_t from_square, 
 		uint8_t to_square
 		) {
+	if (is_occupied_by(board, from_square) == EMPTY) {
+		printf("No piece found at from_square\n");
+		printf("from_square: %d\n", from_square);
+		printf("to_square: %d\n", to_square);
+		print_board(board);
+		// print_bitboard(board->white_king);
+		exit(1);
+	}
+
 	// Check if castling
 	if (
 			(from_square == 4 || from_square == 60)
@@ -302,7 +429,22 @@ void _make_move(
 	uint64_t to_square_mask   = (1ULL << to_square);
 
 	// Get piece at from_square and remove
-	enum ColoredPiece piece;
+	uint8_t piece_idx = 0;
+	piece_idx += 1 * ((board->white_knights & from_square_mask) != 0);
+	piece_idx += 2 * ((board->white_bishops & from_square_mask) != 0);
+	piece_idx += 3 * ((board->white_rooks & from_square_mask) != 0);
+	piece_idx += 4 * ((board->white_queens & from_square_mask) != 0);
+	piece_idx += 5 * ((board->white_king & from_square_mask) != 0);
+
+	piece_idx += 6 * ((board->black_pawns & from_square_mask) != 0);
+	piece_idx += 7 * ((board->black_knights & from_square_mask) != 0);
+	piece_idx += 8 * ((board->black_bishops & from_square_mask) != 0);
+	piece_idx += 9 * ((board->black_rooks & from_square_mask) != 0);
+	piece_idx += 10 * ((board->black_queens & from_square_mask) != 0);
+	piece_idx += 11 * ((board->black_king & from_square_mask) != 0);
+
+	enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
+	/*
 	if (board->white_pawns & from_square_mask) {
 		piece = WHITE_PAWN;
 		board->white_pawns &= ~from_square_mask;
@@ -342,15 +484,7 @@ void _make_move(
 		piece = BLACK_KING;
 		board->black_king &= ~from_square_mask;
 	} 
-
-	else {
-		printf("No piece found at from_square\n");
-		printf("from_square: %d\n", from_square);
-		printf("to_square: %d\n", to_square);
-		print_board(board);
-		// print_bitboard(board->white_king);
-		exit(1);
-	}
+	*/
 
 	// Check promotion
 	if (piece == WHITE_PAWN && to_square >= 56) {
@@ -375,6 +509,9 @@ void _make_move(
 	board->black_king    &= ~to_square_mask;
 
 	// Move piece to to_square
+	*get_bitboard_by_index(board, to_square) |= to_square_mask;
+
+	/*
 	switch (piece) {
 		case WHITE_PAWN:
 			board->white_pawns |= to_square_mask;
@@ -418,6 +555,7 @@ void _make_move(
 			printf("Invalid piece: %llu\n", (uint64_t)piece);
 			exit(1);
 	}
+	*/
 }
 
 void _castle(Board* board, uint8_t from_square, uint8_t to_square) {

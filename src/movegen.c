@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <time.h>
+#include <omp.h>
 
 #include "board.h"
 #include "movegen.h"
@@ -14,16 +15,10 @@ static uint8_t min(const uint8_t a, const uint8_t b) {
 
 void init_move_list(MoveList* list) {
 	list->count = 0;
-	for (int idx = 0; idx < 267; ++idx) {
-		list->moves[idx].mvv_lva_score = 0.0f;
-	}
 }
 
 void reset_move_list(MoveList* list) {
 	list->count = 0;
-	for (int idx = 0; idx < 267; ++idx) {
-		list->moves[idx].mvv_lva_score = 0.0f;
-	}
 }
 
 void add_move(MoveList* list, uint8_t from, uint8_t to) {
@@ -112,7 +107,6 @@ void get_pawn_moves_piece(
 		}
 	}
 
-
 	// Captures
 	bool can_capture_left  = (file > 0);
 	bool can_capture_right = (file < 7);
@@ -165,6 +159,33 @@ void get_pawn_moves(
 	}
 }
 
+/*
+void get_pawn_moves(
+		const Board* board, 
+		MoveList* list, 
+		enum Color color
+		) {
+	BitBoard pawns = color == WHITE ? board->white_pawns : board->black_pawns;
+	BitBoard occupied = get_occupied_squares(board);
+	BitBoard opposing = get_occupied_squares_color(board, !color);
+
+	BitBoard one_forward = color == WHITE ? pawns << 8 : pawns >> 8;
+	BitBoard two_forward = color == WHITE ? pawns << 16 : pawns >> 16;
+
+	BitBoard left_capture  = color == WHITE ? pawns << 7 : pawns >> 9;
+	BitBoard right_capture = color == WHITE ? pawns << 9 : pawns >> 7;
+
+	BitBoard one_forward_empty = one_forward & ~occupied;
+	BitBoard two_forward_empty = two_forward & ~occupied;
+	two_forward_empty &= one_forward_empty;
+	two_forward_empty &= (color == WHITE ? RANK_2 : RANK_7);
+
+	BitBoard left_capture_opposing  = left_capture & opposing;
+	BitBoard right_capture_opposing = right_capture & opposing;
+}
+*/
+
+/*
 void get_knight_moves_piece(
 		const Board* board,
 		MoveList* list,
@@ -246,6 +267,24 @@ void get_knight_moves_piece(
 				add_move(list, square, move);
 			}
 		}
+	}
+}
+*/
+
+void get_knight_moves_piece(
+		const Board* board,
+		MoveList* list,
+		uint8_t square,
+		enum Color color
+		) {
+	BitBoard mask = get_occupied_squares_color(board, color);
+	uint64_t moves = KNIGHT_MOVES[square];
+	moves &= ~mask;
+
+	while (moves) {
+		uint8_t move = __builtin_ctzll(moves);
+		add_move(list, square, move);
+		moves &= moves - 1;
 	}
 }
 
@@ -557,6 +596,18 @@ void get_king_moves(
 		square = __builtin_ctzll(board->black_king);
 	}
 
+	BitBoard mask = get_occupied_squares_color(board, color);
+	uint64_t moves = KING_MOVES[square] & ~mask;
+	moves &= ~mask;
+
+	while (moves) {
+		uint8_t move = __builtin_ctzll(moves);
+		add_move(list, square, move);
+		moves &= moves - 1;
+	}
+
+	/*
+
 	uint8_t rank = square / 8;
 	uint8_t file = square % 8;
 
@@ -633,6 +684,7 @@ void get_king_moves(
 			add_move(list, square, move);
 		}
 	}
+	*/
 
 	// Check castling rights
 	uint8_t starting_square_king = (color == WHITE) ? 4 : 60;
@@ -667,6 +719,7 @@ void get_king_moves(
 	}
 }
 
+/*
 static inline void swap(Move* a, Move* b) {
 	Move tmp = *a;
 	*a = *b;
@@ -696,14 +749,13 @@ static inline void quicksort(Move* moves, int low, int high) {
 		quicksort(moves, pi + 1, high);
 	}
 }
+*/
 
 static inline void insertion_sort(Move* moves, int n) {
     for (int i = 1; i < n; i++) {
         Move key = moves[i];
         int j = i - 1;
 
-        // Move elements of moves[0..i-1], that are
-        // less than key, to one position ahead of their current position
         while (j >= 0 && moves[j].mvv_lva_score < key.mvv_lva_score) {
             moves[j + 1] = moves[j];
             j = j - 1;
@@ -758,6 +810,7 @@ static void search_legal_moves(
 	}
 }
 
+
 void perf_test(int max_depth) {
 	Board board;
 	init_board(&board);
@@ -771,8 +824,10 @@ void perf_test(int max_depth) {
 
 	double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 	printf("=====================================================\n");
-	printf("Time spent: %f\n", time_spent);
+	printf("==                    MOVEGEN PERF                 ==\n");
+	printf("=====================================================\n");
+	printf("Time spent:    %f\n", time_spent);
 	printf("Nodes visited: %llu\n", nodes_visited);
-	printf("MN/s: %f\n", nodes_visited / time_spent / 1000000);
+	printf("MN/s:          %f\n", nodes_visited / time_spent / 1000000);
 	printf("=====================================================\n");
 }

@@ -23,6 +23,15 @@ extern const uint64_t RANK_6;
 extern const uint64_t RANK_7;
 extern const uint64_t RANK_8;
 
+// precompute knight moves
+extern uint64_t PAWN_MOVES[2][64];
+extern uint64_t PAWN_ATTACKS[2][64];
+extern uint64_t KNIGHT_MOVES[64];
+extern uint64_t KING_MOVES[64];
+void init_pawn_moves();
+void init_knight_moves();
+void init_king_moves();
+
 enum Piece {
 	PAWN,
 	KNIGHT,
@@ -74,6 +83,7 @@ typedef struct {
 
 void init_board(Board* board);
 void set_bit(BitBoard* board, int index);
+BitBoard* get_bitboard_by_index(const Board* board, int index);
 uint8_t translate_square_from_char(const char* square);
 const char* translate_square_from_index(uint8_t square);
 void populate_board_from_fen(Board* board, const char* fen);
