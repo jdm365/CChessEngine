@@ -77,32 +77,33 @@ void init_pawn_moves() {
 }
 
 void init_knight_moves() {
-	for (int square = 0; square < 64; square++) {
+	for (int square = 0; square < 64; ++square) {
 		uint64_t knight_moves = 0;
 		int rank = square / 8;
 		int file = square % 8;
+
 		if (rank >= 2 && file >= 1) {
-			knight_moves |= (1ULL << (square - 10));
-		}
-		if (rank >= 2 && file <= 6) {
-			knight_moves |= (1ULL << (square - 6));
-		}
-		if (rank >= 1 && file >= 2) {
 			knight_moves |= (1ULL << (square - 17));
 		}
-		if (rank >= 1 && file <= 5) {
+		if (rank >= 2 && file <= 6) {
 			knight_moves |= (1ULL << (square - 15));
 		}
-		if (rank <= 6 && file >= 1) {
+		if (rank >= 1 && file >= 2) {
+			knight_moves |= (1ULL << (square - 10));
+		}
+		if (rank >= 1 && file <= 5) {
+			knight_moves |= (1ULL << (square - 6));
+		}
+		if (rank <= 6 && file >= 2) {
 			knight_moves |= (1ULL << (square + 6));
 		}
-		if (rank <= 6 && file <= 6) {
+		if (rank <= 6 && file <= 5) {
 			knight_moves |= (1ULL << (square + 10));
 		}
-		if (rank <= 5 && file >= 2) {
+		if (rank <= 5 && file >= 1) {
 			knight_moves |= (1ULL << (square + 15));
 		}
-		if (rank <= 5 && file <= 5) {
+		if (rank <= 5 && file <= 6) {
 			knight_moves |= (1ULL << (square + 17));
 		}
 		KNIGHT_MOVES[square] = knight_moves;
@@ -143,27 +144,11 @@ void init_king_moves() {
 }
 
 void init_board(Board* board) {
-	board->white_pawns   = 0;
-	board->white_knights = 0;
-	board->white_bishops = 0;
-	board->white_rooks   = 0;
-	board->white_queens  = 0;
-	board->white_king    = 0;
-
-	board->black_pawns   = 0;
-	board->black_knights = 0;
-	board->black_bishops = 0;
-	board->black_rooks   = 0;
-	board->black_queens  = 0;
-	board->black_king    = 0;
+	memset(board->pieces, 0, sizeof(board->pieces));
 }
 
 void set_bit(BitBoard* board, int index) {
 	*board |= (1ULL << index);
-}
-
-inline BitBoard* get_bitboard_by_index(const Board* board, int index) {
-	return (BitBoard*)board + index;
 }
 
 uint8_t translate_square_from_char(const char* square) {
@@ -260,40 +245,40 @@ void populate_board_from_fen(Board* board, const char* fen) {
 		int square = 63 - (rank * 8) - (7 - file);
 		switch (piece) {
 			case 'P':
-				set_bit(&board->white_pawns,   square);
+				set_bit(&board->pieces[WHITE_PAWN], square);
 				break;
 			case 'N':
-				set_bit(&board->white_knights, square);
+				set_bit(&board->pieces[WHITE_KNIGHT], square);
 				break;
 			case 'B':
-				set_bit(&board->white_bishops, square);
+				set_bit(&board->pieces[WHITE_BISHOP], square);
 				break;
 			case 'R':
-				set_bit(&board->white_rooks,   square);
+				set_bit(&board->pieces[WHITE_ROOK], square);
 				break;
 			case 'Q':
-				set_bit(&board->white_queens,  square);
+				set_bit(&board->pieces[WHITE_QUEEN], square);
 				break;
 			case 'K':
-				set_bit(&board->white_king,    square);
+				set_bit(&board->pieces[WHITE_KING], square);
 				break;
 			case 'p':
-				set_bit(&board->black_pawns,   square);
+				set_bit(&board->pieces[BLACK_PAWN], square);
 				break;
 			case 'n':
-				set_bit(&board->black_knights, square);
+				set_bit(&board->pieces[BLACK_KNIGHT], square);
 				break;
 			case 'b':
-				set_bit(&board->black_bishops, square);
+				set_bit(&board->pieces[BLACK_BISHOP], square);
 				break;
 			case 'r':
-				set_bit(&board->black_rooks,   square);
+				set_bit(&board->pieces[BLACK_ROOK], square);
 				break;
 			case 'q':
-				set_bit(&board->black_queens,  square);
+				set_bit(&board->pieces[BLACK_QUEEN], square);
 				break;
 			case 'k':
-				set_bit(&board->black_king,    square);
+				set_bit(&board->pieces[BLACK_KING], square);
 				break;
 			case '1':
 				square_cntr += 0;
@@ -333,29 +318,29 @@ void print_board(Board* board) {
 		printf("%d |", rank + 1);
 		for (int file = 0; file < 8; ++file) {
 			int square_index = rank * 8 + file;
-			if (board->white_pawns & (1ULL << square_index)) {
+			if (board->pieces[WHITE_PAWN] & (1ULL << square_index)) {
 				printf(" P |");
-			} else if (board->white_knights & (1ULL << square_index)) {
+			} else if (board->pieces[WHITE_KNIGHT] & (1ULL << square_index)) {
 				printf(" N |");
-			} else if (board->white_bishops & (1ULL << square_index)) {
+			} else if (board->pieces[WHITE_BISHOP] & (1ULL << square_index)) {
 				printf(" B |");
-			} else if (board->white_rooks & (1ULL << square_index)) {
+			} else if (board->pieces[WHITE_ROOK] & (1ULL << square_index)) {
 				printf(" R |");
-			} else if (board->white_queens & (1ULL << square_index)) {
+			} else if (board->pieces[WHITE_QUEEN] & (1ULL << square_index)) {
 				printf(" Q |");
-			} else if (board->white_king & (1ULL << square_index)) {
+			} else if (board->pieces[WHITE_KING] & (1ULL << square_index)) {
 				printf(" K |");
-			} else if (board->black_pawns & (1ULL << square_index)) {
+			} else if (board->pieces[BLACK_PAWN] & (1ULL << square_index)) {
 				printf(" p |");
-			} else if (board->black_knights & (1ULL << square_index)) {
+			} else if (board->pieces[BLACK_KNIGHT] & (1ULL << square_index)) {
 				printf(" n |");
-			} else if (board->black_bishops & (1ULL << square_index)) {
+			} else if (board->pieces[BLACK_BISHOP] & (1ULL << square_index)) {
 				printf(" b |");
-			} else if (board->black_rooks & (1ULL << square_index)) {
+			} else if (board->pieces[BLACK_ROOK] & (1ULL << square_index)) {
 				printf(" r |");
-			} else if (board->black_queens & (1ULL << square_index)) {
+			} else if (board->pieces[BLACK_QUEEN] & (1ULL << square_index)) {
 				printf(" q |");
-			} else if (board->black_king & (1ULL << square_index)) {
+			} else if (board->pieces[BLACK_KING] & (1ULL << square_index)) {
 				printf(" k |");
 			} else {
 				printf("   |");
@@ -409,7 +394,6 @@ void _make_move(
 		printf("from_square: %d\n", from_square);
 		printf("to_square: %d\n", to_square);
 		print_board(board);
-		// print_bitboard(board->white_king);
 		exit(1);
 	}
 
@@ -419,7 +403,7 @@ void _make_move(
 				&& 
 			(abs(from_square - to_square) == 2)
 				&&
-			((board->white_king & (1ULL << from_square)) || (board->black_king & (1ULL << from_square)))
+			((board->pieces[WHITE_KING] & (1ULL << from_square)) || (board->pieces[BLACK_KING] & (1ULL << from_square)))
 		) {
 		_castle(board, from_square, to_square);
 		return;
@@ -428,63 +412,18 @@ void _make_move(
 	uint64_t from_square_mask = (1ULL << from_square);
 	uint64_t to_square_mask   = (1ULL << to_square);
 
-	// Get piece at from_square and remove
+	// Get piece at from_square
 	uint8_t piece_idx = 0;
-	piece_idx += 1 * ((board->white_knights & from_square_mask) != 0);
-	piece_idx += 2 * ((board->white_bishops & from_square_mask) != 0);
-	piece_idx += 3 * ((board->white_rooks & from_square_mask) != 0);
-	piece_idx += 4 * ((board->white_queens & from_square_mask) != 0);
-	piece_idx += 5 * ((board->white_king & from_square_mask) != 0);
-
-	piece_idx += 6 * ((board->black_pawns & from_square_mask) != 0);
-	piece_idx += 7 * ((board->black_knights & from_square_mask) != 0);
-	piece_idx += 8 * ((board->black_bishops & from_square_mask) != 0);
-	piece_idx += 9 * ((board->black_rooks & from_square_mask) != 0);
-	piece_idx += 10 * ((board->black_queens & from_square_mask) != 0);
-	piece_idx += 11 * ((board->black_king & from_square_mask) != 0);
-
+	for (int idx = 0; idx < 12; ++idx) {
+		if (board->pieces[idx] & from_square_mask) {
+			piece_idx = idx;
+			break;
+		}
+	}
 	enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
-	/*
-	if (board->white_pawns & from_square_mask) {
-		piece = WHITE_PAWN;
-		board->white_pawns &= ~from_square_mask;
-	} else if (board->white_knights & from_square_mask) {
-		piece = WHITE_KNIGHT;
-		board->white_knights &= ~from_square_mask;
-	} else if (board->white_bishops & from_square_mask) {
-		piece = WHITE_BISHOP;
-		board->white_bishops &= ~from_square_mask;
-	} else if (board->white_rooks & from_square_mask) {
-		piece = WHITE_ROOK;
-		board->white_rooks &= ~from_square_mask;
-	} else if (board->white_queens & from_square_mask) {
-		piece = WHITE_QUEEN;
-		board->white_queens &= ~from_square_mask;
-	} else if (board->white_king & from_square_mask) {
-		piece = WHITE_KING;
-		board->white_king &= ~from_square_mask;
-	} 
 
-	else if (board->black_pawns & from_square_mask) {
-		piece = BLACK_PAWN;
-		board->black_pawns &= ~from_square_mask;
-	} else if (board->black_knights & from_square_mask) {
-		piece = BLACK_KNIGHT;
-		board->black_knights &= ~from_square_mask;
-	} else if (board->black_bishops & from_square_mask) {
-		piece = BLACK_BISHOP;
-		board->black_bishops &= ~from_square_mask;
-	} else if (board->black_rooks & from_square_mask) {
-		piece = BLACK_ROOK;
-		board->black_rooks &= ~from_square_mask;
-	} else if (board->black_queens & from_square_mask) {
-		piece = BLACK_QUEEN;
-		board->black_queens &= ~from_square_mask;
-	} else if (board->black_king & from_square_mask) {
-		piece = BLACK_KING;
-		board->black_king &= ~from_square_mask;
-	} 
-	*/
+	// Remove piece from from_square
+	board->pieces[piece] &= ~from_square_mask;
 
 	// Check promotion
 	if (piece == WHITE_PAWN && to_square >= 56) {
@@ -494,68 +433,12 @@ void _make_move(
 	}
 
 	// Remove any pieces from to_square
-	board->white_pawns   &= ~to_square_mask;
-	board->white_knights &= ~to_square_mask;
-	board->white_bishops &= ~to_square_mask;
-	board->white_rooks   &= ~to_square_mask;
-	board->white_queens  &= ~to_square_mask;
-	board->white_king    &= ~to_square_mask;
-
-	board->black_pawns   &= ~to_square_mask;
-	board->black_knights &= ~to_square_mask;
-	board->black_bishops &= ~to_square_mask;
-	board->black_rooks   &= ~to_square_mask;
-	board->black_queens  &= ~to_square_mask;
-	board->black_king    &= ~to_square_mask;
+	for (int idx = 0; idx < 12; ++idx) {
+		board->pieces[idx] &= ~to_square_mask;
+	}
 
 	// Move piece to to_square
-	*get_bitboard_by_index(board, to_square) |= to_square_mask;
-
-	/*
-	switch (piece) {
-		case WHITE_PAWN:
-			board->white_pawns |= to_square_mask;
-			break;
-		case WHITE_KNIGHT:
-			board->white_knights |= to_square_mask;
-			break;
-		case WHITE_BISHOP:
-			board->white_bishops |= to_square_mask;
-			break;
-		case WHITE_ROOK:
-			board->white_rooks |= to_square_mask;
-			break;
-		case WHITE_QUEEN:
-			board->white_queens |= to_square_mask;
-			break;
-		case WHITE_KING:
-			board->white_king |= to_square_mask;
-			break;
-
-		case BLACK_PAWN:
-			board->black_pawns |= to_square_mask;
-			break;
-		case BLACK_KNIGHT:
-			board->black_knights |= to_square_mask;
-			break;
-		case BLACK_BISHOP:
-			board->black_bishops |= to_square_mask;
-			break;
-		case BLACK_ROOK:
-			board->black_rooks |= to_square_mask;
-			break;
-		case BLACK_QUEEN:
-			board->black_queens |= to_square_mask;
-			break;
-		case BLACK_KING:
-			board->black_king |= to_square_mask;
-			break;
-
-		default:
-			printf("Invalid piece: %llu\n", (uint64_t)piece);
-			exit(1);
-	}
-	*/
+	board->pieces[piece] |= to_square_mask;
 }
 
 void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
@@ -568,41 +451,36 @@ void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 
 	// Remove king from from_square and rook from appropriate square
 	// Guaranteed no pieces captured, so don't remove anything from to squares.
-
 	if (is_white) {
-		board->white_king &= ~from_square_mask;
-		board->white_rooks &= ~(1ULL << rook_from_square);
+		board->pieces[WHITE_KING] &= ~from_square_mask;
+		board->pieces[WHITE_ROOK] &= ~(1ULL << rook_from_square);
 
-		board->white_king |= to_square_mask;
-		board->white_rooks |= (1ULL << rook_to_square);
+		board->pieces[WHITE_KING] |= to_square_mask;
+		board->pieces[WHITE_ROOK] |= (1ULL << rook_to_square);
 	} 
 	else {
-		board->black_king &= ~from_square_mask;
-		board->black_rooks &= ~(1ULL << rook_from_square);
+		board->pieces[BLACK_KING] &= ~from_square_mask;
+		board->pieces[BLACK_ROOK] &= ~(1ULL << rook_from_square);
 
-		board->black_king |= to_square_mask;
-		board->black_rooks |= (1ULL << rook_to_square);
+		board->pieces[BLACK_KING] |= to_square_mask;
+		board->pieces[BLACK_ROOK] |= (1ULL << rook_to_square);
 	}
 }
 
 enum Color is_occupied_by(const Board* board, uint8_t square) {
-	BitBoard white_board = board->white_pawns;
-	white_board |= board->white_knights;
-	white_board |= board->white_bishops;
-	white_board |= board->white_rooks;
-	white_board |= board->white_queens;
-	white_board |= board->white_king;
+	BitBoard white_board = board->pieces[WHITE_PAWN];
+	for (int idx = 1; idx < 6; ++idx) {
+		white_board |= board->pieces[idx];
+	}
 
 	if (white_board & (1ULL << square)) {
 		return WHITE;
 	}
 
-	BitBoard black_board = board->black_pawns;
-	black_board |= board->black_knights;
-	black_board |= board->black_bishops;
-	black_board |= board->black_rooks;
-	black_board |= board->black_queens;
-	black_board |= board->black_king;
+	BitBoard black_board = board->pieces[BLACK_PAWN];
+	for (int idx = 1; idx < 6; ++idx) {
+		black_board |= board->pieces[idx + 6];
+	}
 
 	if (black_board & (1ULL << square)) {
 		return BLACK;
@@ -612,57 +490,21 @@ enum Color is_occupied_by(const Board* board, uint8_t square) {
 }
 
 enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
-	if (board->white_pawns & (1ULL << square)) {
-		return WHITE_PAWN;
-	} else if (board->white_knights & (1ULL << square)) {
-		return WHITE_KNIGHT;
-	} else if (board->white_bishops & (1ULL << square)) {
-		return WHITE_BISHOP;
-	} else if (board->white_rooks & (1ULL << square)) {
-		return WHITE_ROOK;
-	} else if (board->white_queens & (1ULL << square)) {
-		return WHITE_QUEEN;
-	} else if (board->white_king & (1ULL << square)) {
-		return WHITE_KING;
-	} 
-
-	else if (board->black_pawns & (1ULL << square)) {
-		return BLACK_PAWN;
-	} else if (board->black_knights & (1ULL << square)) {
-		return BLACK_KNIGHT;
-	} else if (board->black_bishops & (1ULL << square)) {
-		return BLACK_BISHOP;
-	} else if (board->black_rooks & (1ULL << square)) {
-		return BLACK_ROOK;
-	} else if (board->black_queens & (1ULL << square)) {
-		return BLACK_QUEEN;
-	} else if (board->black_king & (1ULL << square)) {
-		return BLACK_KING;
-	} 
-
-	else {
-		return EMPTY_SQUARE;
+	for (int idx = 0; idx < 12; ++idx) {
+		if (board->pieces[idx] & (1ULL << square)) {
+			return idx;
+		}
 	}
+	return EMPTY_SQUARE;
 }
 
 enum Piece piece_at(const Board* board, uint8_t square) {
-	if ((board->white_pawns | board->black_pawns) & (1ULL << square)) {
-		return PAWN;
-	} else if ((board->white_knights | board->black_knights) & (1ULL << square)) {
-		return KNIGHT;
-	} else if ((board->white_bishops | board->black_bishops) & (1ULL << square)) {
-		return BISHOP;
-	} else if ((board->white_rooks | board->black_rooks) & (1ULL << square)) {
-		return ROOK;
-	} else if ((board->white_queens | board->black_queens) & (1ULL << square)) {
-		return QUEEN;
-	} else if ((board->white_king | board->black_king) & (1ULL << square)) {
-		return KING;
-	} 
-
-	else {
-		return EMPTY_PIECE;
+	for (int idx = 0; idx < 6; ++idx) {
+		if (board->pieces[idx] & (1ULL << square)) {
+			return idx;
+		}
 	}
+	return EMPTY_PIECE;
 }
 
 
@@ -671,44 +513,30 @@ bool is_empty(const Board* board, uint8_t square) {
 }
 
 BitBoard get_occupied_squares(const Board* board) {
-	BitBoard occupied_squares = 0;
-
-	occupied_squares |= board->white_pawns;
-	occupied_squares |= board->white_knights;
-	occupied_squares |= board->white_bishops;
-	occupied_squares |= board->white_rooks;
-	occupied_squares |= board->white_queens;
-	occupied_squares |= board->white_king;
-
-	occupied_squares |= board->black_pawns;
-	occupied_squares |= board->black_knights;
-	occupied_squares |= board->black_bishops;
-	occupied_squares |= board->black_rooks;
-	occupied_squares |= board->black_queens;
-	occupied_squares |= board->black_king;
+	BitBoard occupied_squares = board->pieces[WHITE_PAWN];
+	for (int idx = 1; idx < 12; ++idx) {
+		occupied_squares |= board->pieces[idx];
+	}
 
 	return occupied_squares;
 }
 
 BitBoard get_occupied_squares_color(const Board* board, enum Color color) {
-	BitBoard occupied_squares = 0;
-
 	if (color == WHITE) {
-		occupied_squares |= board->white_pawns;
-		occupied_squares |= board->white_knights;
-		occupied_squares |= board->white_bishops;
-		occupied_squares |= board->white_rooks;
-		occupied_squares |= board->white_queens;
-		occupied_squares |= board->white_king;
-	} 
-	else if (color == BLACK) {
-		occupied_squares |= board->black_pawns;
-		occupied_squares |= board->black_knights;
-		occupied_squares |= board->black_bishops;
-		occupied_squares |= board->black_rooks;
-		occupied_squares |= board->black_queens;
-		occupied_squares |= board->black_king;
+		BitBoard occupied_squares = board->pieces[WHITE_PAWN];
+		for (int idx = 1; idx < 6; ++idx) {
+			occupied_squares |= board->pieces[idx];
+		}
+		return occupied_squares;
+	} else if (color == BLACK) {
+		BitBoard occupied_squares = board->pieces[BLACK_PAWN];
+		for (int idx = 1; idx < 6; ++idx) {
+			occupied_squares |= board->pieces[idx + 6];
+		}
+		return occupied_squares;
 	}
 
-	return occupied_squares;
+	printf("Error: get_occupied_squares_color. Color must be WHITE or BLACK.\n");
+	exit(1);
+	return 0;
 }

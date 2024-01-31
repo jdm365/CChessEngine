@@ -65,7 +65,7 @@ bool is_move_legal(MoveList* legal_moves, Move move) {
 }
 
 bool game_over(const Board* board) {
-	return (__builtin_popcountll(board->white_king | board->black_king) != 2);
+	return (__builtin_popcountll(board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) != 2);
 }
 
 void print_legal_moves(const Board* board, enum Color color) {
@@ -150,7 +150,7 @@ void get_pawn_moves(
 		MoveList* list, 
 		enum Color color
 		) {
-	BitBoard pawns = color == WHITE ? board->white_pawns : board->black_pawns;
+	BitBoard pawns = (color == WHITE) ? board->pieces[WHITE_PAWN] : board->pieces[BLACK_PAWN];
 
 	while (pawns) {
 		uint8_t square = __builtin_ctzll(pawns);
@@ -185,92 +185,6 @@ void get_pawn_moves(
 }
 */
 
-/*
-void get_knight_moves_piece(
-		const Board* board,
-		MoveList* list,
-		uint8_t square,
-		enum Color color
-		) {
-	uint8_t rank = square / 8;
-	uint8_t file = square % 8;
-
-	bool can_move_two_up    = (rank < 6);
-	bool can_move_two_down  = (rank > 1);
-	bool can_move_two_left  = (file > 1);
-	bool can_move_two_right = (file < 6);
-
-	bool can_move_one_up    = (rank < 7);
-	bool can_move_one_down  = (rank > 0);
-	bool can_move_one_left  = (file > 0);
-	bool can_move_one_right = (file < 7);
-
-	if (can_move_two_up) {
-		if (can_move_one_left) {
-			uint8_t move = square + 15;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-
-		if (can_move_one_right) {
-			uint8_t move = square + 17;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-	}
-
-	if (can_move_two_down) {
-		if (can_move_one_left) {
-			uint8_t move = square - 17;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-
-		if (can_move_one_right) {
-			uint8_t move = square - 15;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-	}
-
-	if (can_move_two_left) {
-		if (can_move_one_up) {
-			uint8_t move = square + 6;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-
-		if (can_move_one_down) {
-			uint8_t move = square - 10;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-	}
-
-	if (can_move_two_right) {
-		if (can_move_one_up) {
-			uint8_t move = square + 10;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-
-		if (can_move_one_down) {
-			uint8_t move = square - 6;
-			if (is_occupied_by(board, move) != color) {
-				add_move(list, square, move);
-			}
-		}
-	}
-}
-*/
-
 void get_knight_moves_piece(
 		const Board* board,
 		MoveList* list,
@@ -293,7 +207,7 @@ void get_knight_moves(
 		MoveList* list,
 		enum Color color
 		) {
-	BitBoard knights = (color == WHITE) ? board->white_knights : board->black_knights;
+	BitBoard knights = (color == WHITE) ? board->pieces[WHITE_KNIGHT] : board->pieces[BLACK_KNIGHT];
 
 	while (knights) {
 		uint8_t square = __builtin_ctzll(knights);
@@ -424,7 +338,7 @@ void get_bishop_moves(
 		MoveList* list,
 		enum Color color
 		) {
-	BitBoard bishops = (color == WHITE) ? board->white_bishops : board->black_bishops;
+	BitBoard bishops = (color == WHITE) ? board->pieces[WHITE_BISHOP] : board->pieces[BLACK_BISHOP];
 
 	while (bishops) {
 		uint8_t square = __builtin_ctzll(bishops);
@@ -547,7 +461,7 @@ void get_rook_moves(
 		MoveList* list, 
 		enum Color color
 		) {
-	BitBoard rooks = (color == WHITE) ? board->white_rooks : board->black_rooks;
+	BitBoard rooks = (color == WHITE) ? board->pieces[WHITE_ROOK] : board->pieces[BLACK_ROOK];
 
 	while (rooks) {
 		uint8_t square = __builtin_ctzll(rooks);
@@ -571,7 +485,7 @@ void get_queen_moves(
 		MoveList* list, 
 		enum Color color
 		) {
-	BitBoard queens = (color == WHITE) ? board->white_queens : board->black_queens;
+	BitBoard queens = (color == WHITE) ? board->pieces[WHITE_QUEEN] : board->pieces[BLACK_QUEEN];
 
 	while (queens) {
 		uint8_t square = __builtin_ctzll(queens);
@@ -585,15 +499,15 @@ void get_king_moves(
 		MoveList* list, 
 		enum Color color
 		) {
-	if (__builtin_popcountll(board->white_king | board->black_king) != 2) {
+	if (__builtin_popcountll(board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) != 2) {
 		return;
 	}
 	uint8_t square;
 	if (color == WHITE) {
-		square = __builtin_ctzll(board->white_king);
+		square = __builtin_ctzll(board->pieces[WHITE_KING]);
 	}
 	else {
-		square = __builtin_ctzll(board->black_king);
+		square = __builtin_ctzll(board->pieces[BLACK_KING]);
 	}
 
 	BitBoard mask = get_occupied_squares_color(board, color);
@@ -606,86 +520,6 @@ void get_king_moves(
 		moves &= moves - 1;
 	}
 
-	/*
-
-	uint8_t rank = square / 8;
-	uint8_t file = square % 8;
-
-	bool upper = (rank < 7);
-	bool right = (file < 7);
-	bool lower = (rank > 0);
-	bool left  = (file > 0);
-
-	bool upper_left  = (rank < 7) && (file > 0);
-	bool upper_right = (rank < 7) && (file < 7);
-	bool lower_right = (rank > 0) && (file < 7);
-	bool lower_left  = (rank > 0) && (file > 0);
-
-	if (upper) {
-		uint8_t move = (rank + 1) * 8 + file;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (upper_right) {
-		uint8_t move = (rank + 1) * 8 + file + 1;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (right) {
-		uint8_t move = rank * 8 + file + 1;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (lower_right) {
-		uint8_t move = (rank - 1) * 8 + file + 1;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (lower) {
-		uint8_t move = (rank - 1) * 8 + file;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (lower_left) {
-		uint8_t move = (rank - 1) * 8 + file - 1;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (left) {
-		uint8_t move = rank * 8 + file - 1;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-
-	if (upper_left) {
-		uint8_t move = (rank + 1) * 8 + file - 1;
-		enum Color occupant = is_occupied_by(board, move);
-		if (occupant != color) {
-			add_move(list, square, move);
-		}
-	}
-	*/
-
 	// Check castling rights
 	uint8_t starting_square_king = (color == WHITE) ? 4 : 60;
 	if (square != starting_square_king) return;
@@ -693,7 +527,7 @@ void get_king_moves(
 	uint8_t starting_queens_rook = (color == WHITE) ? 0 : 56;
 	uint8_t starting_kings_rook  = (color == WHITE) ? 7 : 63;
 
-	BitBoard rooks = (color == WHITE) ? board->white_rooks : board->black_rooks;
+	BitBoard rooks = (color == WHITE) ? board->pieces[WHITE_ROOK] : board->pieces[BLACK_ROOK];
 	BitBoard occupied = get_occupied_squares(board);
 
 	if (

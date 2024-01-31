@@ -41,10 +41,12 @@ void play_self_with_gui(int max_depth) {
 		gui_draw_board(&gui, &board, 64);
 
 		if (game_over(&board)) {
-			if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
+			// if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
+			if (__builtin_popcountll(board.pieces[WHITE_KING]) > __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - White Wins");
 			} 
-			else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
+			// else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
+			else if (__builtin_popcountll(board.pieces[WHITE_KING]) < __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - Black Wins");
 			} 
 			else {
@@ -61,6 +63,7 @@ void play_self_with_gui(int max_depth) {
 
 		color = !color;
 		SDL_Delay(750);
+		// SDL_Delay(5000);
 	}
 	quit:
 		gui_quit(&gui);
@@ -100,10 +103,12 @@ void play_against_engine(int max_depth) {
 		gui_draw_board(&gui, &board, 64);
 
 		if (game_over(&board)) {
-			if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
+			// if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
+			if (__builtin_popcountll(board.pieces[WHITE_KING]) > __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - White Wins");
 			} 
-			else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
+			// else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
+			else if (__builtin_popcountll(board.pieces[WHITE_KING]) < __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - Black Wins");
 			} 
 			else {

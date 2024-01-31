@@ -2,6 +2,7 @@
 PROJECT_NAME = $(shell basename "$(realpath ./)")
 
 CXX = clang
+## CXX = gcc
 CXXFLAGS = -Wall -g -O3 -ffast-math -march=native
 CXXFLAGS += -mpopcnt
 CXXFLAGS += -Wno-format
@@ -23,5 +24,10 @@ all:
 run: all
 	./$(TARGET)
 
+sanitize:
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -fsanitize=address -o $(TARGET)
+	./$(TARGET)
+
+
 clean:
-	rm -f $(TARGET)
+	rm -f ./bin./release/*

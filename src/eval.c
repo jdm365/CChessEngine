@@ -253,8 +253,8 @@ inline BitBoard get_pawn_attacks(BitBoard pawns, enum Color color) {
 float eval_pawns(const Board* board) {
 	float value = 0.0f;
 
-	BitBoard white_pawns = board->white_pawns;
-	BitBoard black_pawns = board->black_pawns;
+	BitBoard white_pawns = board->pieces[WHITE_PAWN];
+	BitBoard black_pawns = board->pieces[BLACK_PAWN];
 
 	while (white_pawns) {
 		uint8_t square = __builtin_ctzll(white_pawns);
@@ -272,14 +272,14 @@ float eval_pawns(const Board* board) {
 	BitBoard white_board = get_occupied_squares_color(board, WHITE);
 	BitBoard black_board = get_occupied_squares_color(board, BLACK);
 
-	BitBoard white_pawn_attacks = get_pawn_attacks(board->white_pawns, WHITE);
-	BitBoard black_pawn_attacks = get_pawn_attacks(board->black_pawns, BLACK);
+	BitBoard white_pawn_attacks = get_pawn_attacks(board->pieces[WHITE_PAWN], WHITE);
+	BitBoard black_pawn_attacks = get_pawn_attacks(board->pieces[BLACK_PAWN], BLACK);
 
 	value += 0.1f * __builtin_popcountll(white_pawn_attacks & white_board);
 	value -= 0.1f * __builtin_popcountll(black_pawn_attacks & black_board);
 
-	BitBoard white_pawns_blocked = (board->white_pawns >> 8) & white_board;
-	BitBoard black_pawns_blocked = (board->black_pawns << 8) & black_board;
+	BitBoard white_pawns_blocked = (white_pawns >> 8) & white_board;
+	BitBoard black_pawns_blocked = (black_pawns << 8) & black_board;
 
 	value -= 0.25f * __builtin_popcountll(white_pawns_blocked);
 	value += 0.25f * __builtin_popcountll(black_pawns_blocked);
@@ -290,8 +290,8 @@ float eval_pawns(const Board* board) {
 float eval_knights(const Board* board) {
 	float value = 0.0f;
 
-	BitBoard white_knights = board->white_knights;
-	BitBoard black_knights = board->black_knights;
+	BitBoard white_knights = board->pieces[WHITE_KNIGHT];
+	BitBoard black_knights = board->pieces[BLACK_KNIGHT];
 
 	while (white_knights) {
 		uint8_t square = __builtin_ctzll(white_knights);
@@ -312,8 +312,8 @@ float eval_knights(const Board* board) {
 float eval_bishops(const Board* board) {
 	float value = 0.0f;
 
-	BitBoard white_bishops = board->white_bishops;
-	BitBoard black_bishops = board->black_bishops;
+	BitBoard white_bishops = board->pieces[WHITE_BISHOP];
+	BitBoard black_bishops = board->pieces[BLACK_BISHOP];
 
 	BitBoard occupied = get_occupied_squares(board);
 
@@ -321,30 +321,53 @@ float eval_bishops(const Board* board) {
 	uint8_t black_bishops_range_sum = get_diagonal_range(black_bishops, occupied);
 
 	value += 0.1f * (white_bishops_range_sum - black_bishops_range_sum);
+
+	while (white_bishops) {
+		uint8_t square = __builtin_ctzll(white_bishops);
+		white_bishops &= white_bishops - 1;
+		value += BISHOP_VALUE + 0.075f * BISHOP_TABLE[square];
+	}
+
+	while (black_bishops) {
+		uint8_t square = __builtin_ctzll(black_bishops);
+		black_bishops &= black_bishops - 1;
+		value -= BISHOP_VALUE + 0.075f * BISHOP_TABLE[FLIP_TABLE[square]];
+	}
 	return value;
 }
 
 float eval_rooks(const Board* board) {
 	float value = 0.0f;
 
-	BitBoard white_rooks = board->white_rooks;
-	BitBoard black_rooks = board->black_rooks;
+	BitBoard white_rooks = board->pieces[WHITE_ROOK];
+	BitBoard black_rooks = board->pieces[BLACK_ROOK];
 
 	BitBoard occupied = get_occupied_squares(board);
 
-	value += 0.05f * (__builtin_popcountll(white_rooks) - __builtin_popcountll(black_rooks));
 	uint8_t white_rooks_range_sum = get_straight_range(white_rooks, occupied);
 	uint8_t black_rooks_range_sum = get_straight_range(black_rooks, occupied);
 
 	value += 0.05f * (white_rooks_range_sum - black_rooks_range_sum);
+
+	while (white_rooks) {
+		uint8_t square = __builtin_ctzll(white_rooks);
+		white_rooks &= white_rooks - 1;
+		value += ROOK_VALUE + 0.075f * ROOK_TABLE[square];
+	}
+
+	while (black_rooks) {
+		uint8_t square = __builtin_ctzll(black_rooks);
+		black_rooks &= black_rooks - 1;
+		value -= ROOK_VALUE + 0.075f * ROOK_TABLE[FLIP_TABLE[square]];
+	}
 	return value;
 }
 
 float eval_queens(const Board* board) {
 	float value = 0.0f;
 
-	BitBoard white_queens = board->white_queens;
-	BitBoard black_queens = board->black_queens;
+	BitBoard white_queens = board->pieces[WHITE_QUEEN];
+	BitBoard black_queens = board->pieces[BLACK_QUEEN];
 
 	while (white_queens) {
 		uint8_t square = __builtin_ctzll(white_queens);
@@ -366,8 +389,8 @@ float eval_kings(const Board* board) {
 
 	const float* table = (__builtin_popcountll(get_occupied_squares(board)) > 12) ? KING_TABLE_ENDGAME : KING_TABLE;
 
-	BitBoard white_king = board->white_king;
-	BitBoard black_king = board->black_king;
+	BitBoard white_king = board->pieces[WHITE_KING];
+	BitBoard black_king = board->pieces[BLACK_KING];
 
 	while (white_king) {
 		uint8_t square = __builtin_ctzll(white_king);

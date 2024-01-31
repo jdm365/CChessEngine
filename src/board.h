@@ -66,24 +66,11 @@ enum ColoredPiece {
 
 typedef uint64_t BitBoard;
 typedef struct {
-	BitBoard white_pawns;
-	BitBoard white_knights;
-	BitBoard white_bishops;
-	BitBoard white_rooks;
-	BitBoard white_queens;
-	BitBoard white_king;
-
-	BitBoard black_pawns;
-	BitBoard black_knights;
-	BitBoard black_bishops;
-	BitBoard black_rooks;
-	BitBoard black_queens;
-	BitBoard black_king;
+	BitBoard pieces[12];
 } Board;
 
 void init_board(Board* board);
 void set_bit(BitBoard* board, int index);
-BitBoard* get_bitboard_by_index(const Board* board, int index);
 uint8_t translate_square_from_char(const char* square);
 const char* translate_square_from_index(uint8_t square);
 void populate_board_from_fen(Board* board, const char* fen);
