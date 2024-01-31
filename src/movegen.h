@@ -49,6 +49,7 @@ void get_pawn_moves(
 void get_knight_moves_piece(
 		const Board* board, 
 		MoveList* list, 
+		const BitBoard* self_mask,
 		uint8_t square,
 		enum Color color
 		);

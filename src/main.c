@@ -132,7 +132,7 @@ int main() {
 	init_knight_moves();
 	init_king_moves();
 
-	const int MAX_DEPTH = 6;
+	const int MAX_DEPTH = 4;
 
 	perf_test(MAX_DEPTH);
 	// play_self_with_gui(MAX_DEPTH);

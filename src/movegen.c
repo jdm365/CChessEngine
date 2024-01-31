@@ -189,12 +189,12 @@ void get_pawn_moves(
 void get_knight_moves_piece(
 		const Board* board,
 		MoveList* list,
+		const BitBoard* self_mask,
 		uint8_t square,
 		enum Color color
 		) {
-	BitBoard mask = get_occupied_squares_color(board, color);
 	uint64_t moves = KNIGHT_MOVES[square];
-	moves &= ~mask;
+	moves &= ~*self_mask;
 
 	while (moves) {
 		uint8_t move = __builtin_ctzll(moves);
@@ -208,11 +208,13 @@ void get_knight_moves(
 		MoveList* list,
 		enum Color color
 		) {
-	BitBoard knights = (color == WHITE) ? board->pieces[WHITE_KNIGHT] : board->pieces[BLACK_KNIGHT];
+	// BitBoard knights = (color == WHITE) ? board->pieces[WHITE_KNIGHT] : board->pieces[BLACK_KNIGHT];
+	BitBoard knights = board->pieces[WHITE_KNIGHT + 6 * color];
+	BitBoard self_mask = get_occupied_squares_color(board, color);
 
 	while (knights) {
 		uint8_t square = __builtin_ctzll(knights);
-		get_knight_moves_piece(board, list, square, color);
+		get_knight_moves_piece(board, list, &self_mask, square, color);
 		knights &= knights - 1;
 	}
 }
@@ -500,9 +502,6 @@ void get_king_moves(
 		MoveList* list, 
 		enum Color color
 		) {
-	if (__builtin_popcountll(board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) != 2) {
-		return;
-	}
 	uint8_t square;
 	if (color == WHITE) {
 		square = __builtin_ctzll(board->pieces[WHITE_KING]);
@@ -522,11 +521,15 @@ void get_king_moves(
 	}
 
 	// Check castling rights
-	uint8_t starting_square_king = (color == WHITE) ? 4 : 60;
+	// uint8_t starting_square_king = (color == WHITE) ? 4 : 60;
+	uint8_t offset = color * 56;
+	uint8_t starting_square_king = 4 + offset;
 	if (square != starting_square_king) return;
 
-	uint8_t starting_queens_rook = (color == WHITE) ? 0 : 56;
-	uint8_t starting_kings_rook  = (color == WHITE) ? 7 : 63;
+	// uint8_t starting_queens_rook = (color == WHITE) ? 0 : 56;
+	// uint8_t starting_kings_rook  = (color == WHITE) ? 7 : 63;
+	uint8_t starting_queens_rook = offset;
+	uint8_t starting_kings_rook  = 7 + offset;
 
 	BitBoard rooks = (color == WHITE) ? board->pieces[WHITE_ROOK] : board->pieces[BLACK_ROOK];
 	BitBoard occupied = get_occupied_squares(board);
