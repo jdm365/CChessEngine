@@ -126,8 +126,8 @@ void get_pawn_moves_piece(
 			}
 		}
 	}
-
-	if (color == BLACK) {
+	// if (color == BLACK) {
+	else {
 		if (can_capture_left) {
 			uint8_t capture_left = square - 9;
 			if (is_occupied_by(board, capture_left) == WHITE) {
@@ -150,7 +150,8 @@ void get_pawn_moves(
 		MoveList* list, 
 		enum Color color
 		) {
-	BitBoard pawns = (color == WHITE) ? board->pieces[WHITE_PAWN] : board->pieces[BLACK_PAWN];
+	// BitBoard pawns = (color == WHITE) ? board->pieces[WHITE_PAWN] : board->pieces[BLACK_PAWN];
+	BitBoard pawns = board->pieces[WHITE_PAWN + 6 * color];
 
 	while (pawns) {
 		uint8_t square = __builtin_ctzll(pawns);

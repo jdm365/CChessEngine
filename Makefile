@@ -28,6 +28,11 @@ sanitize:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -fsanitize=address -o $(TARGET)
 	./$(TARGET)
 
+profile:
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -pg -o $(TARGET)
+	./$(TARGET)
+	gprof $(TARGET) gmon.out > analysis.txt
+
 
 clean:
 	rm -f ./bin./release/*

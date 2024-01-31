@@ -389,6 +389,7 @@ void _make_move(
 		uint8_t from_square, 
 		uint8_t to_square
 		) {
+	/*
 	if (is_occupied_by(board, from_square) == EMPTY) {
 		printf("No piece found at from_square\n");
 		printf("from_square: %d\n", from_square);
@@ -396,6 +397,7 @@ void _make_move(
 		print_board(board);
 		exit(1);
 	}
+	*/
 
 	// Check if castling
 	if (
@@ -415,10 +417,7 @@ void _make_move(
 	// Get piece at from_square
 	uint8_t piece_idx = 0;
 	for (int idx = 0; idx < 12; ++idx) {
-		if (board->pieces[idx] & from_square_mask) {
-			piece_idx = idx;
-			break;
-		}
+		piece_idx += idx * (board->pieces[idx] & from_square_mask);
 	}
 	enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
 
@@ -426,11 +425,15 @@ void _make_move(
 	board->pieces[piece] &= ~from_square_mask;
 
 	// Check promotion
+	/*
 	if (piece == WHITE_PAWN && to_square >= 56) {
 		piece = WHITE_QUEEN;
 	} else if (piece == BLACK_PAWN && to_square <= 7) {
 		piece = BLACK_QUEEN;
 	}
+	*/
+	piece += 5 * (piece == WHITE_PAWN && to_square >= 56);
+	piece += 5 * (piece == BLACK_PAWN && to_square <= 7);
 
 	// Remove any pieces from to_square
 	for (int idx = 0; idx < 12; ++idx) {
