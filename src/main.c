@@ -40,6 +40,14 @@ void play_self_with_gui(int max_depth) {
 
 		gui_draw_board(&gui, &board, 64);
 
+		float eval = eval_board(&board);
+		char title[64];
+		sprintf(title, "Eval: %.2f", eval);
+		SDL_SetWindowTitle(gui.window, title);
+
+		print_bitboard(board.pieces[WHITE_KING] | board.pieces[BLACK_KING]);
+		printf("Eval: %.2f\n", eval);
+
 		if (game_over(&board)) {
 			// if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
 			if (__builtin_popcountll(board.pieces[WHITE_KING]) > __builtin_popcountll(board.pieces[BLACK_KING])) {
@@ -56,10 +64,6 @@ void play_self_with_gui(int max_depth) {
 			SDL_Delay(2500);
 			goto quit;
 		}
-		float eval = eval_board(&board);
-		char title[64];
-		sprintf(title, "Eval: %.2f", eval);
-		SDL_SetWindowTitle(gui.window, title);
 
 		color = !color;
 		SDL_Delay(750);
@@ -134,8 +138,8 @@ int main() {
 
 	const int MAX_DEPTH = 4;
 
-	perf_test(MAX_DEPTH);
-	// play_self_with_gui(MAX_DEPTH);
+	// perf_test(MAX_DEPTH);
+	play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 	return 0;
 }

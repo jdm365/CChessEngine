@@ -80,8 +80,8 @@ const float QUEEN_TABLE[64] = {
 const float KING_TABLE[64] = {
 	4.0f, 6.0f, 4.0f, 0.0f, 0.0f, -1.0f, 6.0f, 4.0f,
 	4.0f, 4.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.0f, 4.0f,
-	-2.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-2.0f,
-	-4.0f,-6.0f,-6.0f,-8.0f,-8.0f,-6.0f,-6.0f,-4.0f,
+	-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,-4.0f,
+	-6.0f,-6.0f,-6.0f,-8.0f,-8.0f,-6.0f,-6.0f,-6.0f,
 	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f,
 	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f,
 	-6.0f,-8.0f,-8.0f,-10.0f,-10.0f,-8.0f,-8.0f,-6.0f,
@@ -259,13 +259,13 @@ float eval_pawns(const Board* board) {
 	while (white_pawns) {
 		uint8_t square = __builtin_ctzll(white_pawns);
 		white_pawns &= white_pawns - 1;
-		value += PAWN_VALUE + 0.075f * PAWN_TABLE[square];
+		value += PAWN_VALUE + 0.125f * PAWN_TABLE[square];
 	}
 
 	while (black_pawns) {
 		uint8_t square = __builtin_ctzll(black_pawns);
 		black_pawns &= black_pawns - 1;
-		value -= PAWN_VALUE + 0.075f * PAWN_TABLE[FLIP_TABLE[square]];
+		value -= PAWN_VALUE + 0.125f * PAWN_TABLE[FLIP_TABLE[square]];
 	}
 
 	// Supporting pawns bonus
@@ -387,7 +387,7 @@ float eval_queens(const Board* board) {
 float eval_kings(const Board* board) {
 	float value = 0.0f;
 
-	const float* table = (__builtin_popcountll(get_occupied_squares(board)) > 12) ? KING_TABLE_ENDGAME : KING_TABLE;
+	const float* table = (__builtin_popcountll(get_occupied_squares(board)) > 16) ? KING_TABLE : KING_TABLE_ENDGAME;
 
 	BitBoard white_king = board->pieces[WHITE_KING];
 	BitBoard black_king = board->pieces[BLACK_KING];
@@ -395,13 +395,13 @@ float eval_kings(const Board* board) {
 	while (white_king) {
 		uint8_t square = __builtin_ctzll(white_king);
 		white_king &= white_king - 1;
-		value += KING_VALUE + 0.1f * table[square];
+		value += (KING_VALUE + 0.1f * table[square]);
 	}
 
 	while (black_king) {
 		uint8_t square = __builtin_ctzll(black_king);
 		black_king &= black_king - 1;
-		value -= KING_VALUE + 0.1f * table[FLIP_TABLE[square]];
+		value -= (KING_VALUE + 0.1f * table[FLIP_TABLE[square]]);
 	}
 
 	return value;

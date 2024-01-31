@@ -416,8 +416,8 @@ void _make_move(
 
 	// Get piece at from_square
 	uint8_t piece_idx = 0;
-	for (int idx = 0; idx < 12; ++idx) {
-		piece_idx += idx * (board->pieces[idx] & from_square_mask);
+	for (int idx = 1; idx < 12; ++idx) {
+		piece_idx += idx * ((board->pieces[idx] & from_square_mask) != 0);
 	}
 	enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
 
@@ -432,8 +432,8 @@ void _make_move(
 		piece = BLACK_QUEEN;
 	}
 	*/
-	piece += 5 * (piece == WHITE_PAWN && to_square >= 56);
-	piece += 5 * (piece == BLACK_PAWN && to_square <= 7);
+	piece += 4 * (piece == WHITE_PAWN && to_square >= 56);
+	piece += 4 * (piece == BLACK_PAWN && to_square <= 7);
 
 	// Remove any pieces from to_square
 	for (int idx = 0; idx < 12; ++idx) {
@@ -533,8 +533,8 @@ BitBoard get_occupied_squares_color(const Board* board, enum Color color) {
 		return occupied_squares;
 	} else if (color == BLACK) {
 		BitBoard occupied_squares = board->pieces[BLACK_PAWN];
-		for (int idx = 1; idx < 6; ++idx) {
-			occupied_squares |= board->pieces[idx + 6];
+		for (int idx = 7; idx < 12; ++idx) {
+			occupied_squares |= board->pieces[idx];
 		}
 		return occupied_squares;
 	}
