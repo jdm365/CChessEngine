@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "board.h"
@@ -12,14 +13,13 @@ const float ROOK_VALUE   = 5.0f;
 const float QUEEN_VALUE  = 9.0f;
 const float KING_VALUE   = 1000.0f;
 
-const float PIECE_VALUES[7] = {
+const float PIECE_VALUES[6] = {
 	PAWN_VALUE,
 	KNIGHT_VALUE,
 	BISHOP_VALUE,
 	ROOK_VALUE,
 	QUEEN_VALUE,
-	KING_VALUE,
-	0.0f
+	KING_VALUE
 };
 
 const float PAWN_TABLE[64] = {
@@ -110,6 +110,7 @@ const uint8_t FLIP_TABLE[64] = {
 	 0,  1,  2,  3,  4,  5,  6,  7
 };
 
+float HISTORY_TABLE[64][64] = {{0.0f}};
 
 static uint8_t get_diagonal_range(BitBoard movers, BitBoard blockers) {
 	uint8_t range_sum = 0;
@@ -430,7 +431,8 @@ float minimax(
 		float beta,
 		uint64_t* nodes_visited
 		) {
-	float maximizing_factor = (color == WHITE) ? 1.0f : -1.0f;
+	// float maximizing_factor = (color == WHITE) ? 1.0f : -1.0f;
+	float maximizing_factor = (1.0f - 2.0f * color);
 
 	if ((depth == max_depth) || game_over(board)) {
 		return eval_board(board) * maximizing_factor;
@@ -446,6 +448,8 @@ float minimax(
 
 	float best_score = -INF;
 	for (int idx = 0; idx < moves.count; ++idx) {
+		// TODO: LMR
+
 		++*nodes_visited;
 		Move move = moves.moves[idx];
 		Board new_board = *board;
@@ -466,12 +470,14 @@ float minimax(
 			alpha = score;
 		}
 		if (alpha >= beta) {
+			HISTORY_TABLE[move.from][move.to] += 0.000001f * ((float)depth * (float)depth);
 			break;
 		}
 	}
 	return best_score;
 }
 
+/*
 Move get_best_move(const Board* board, enum Color color, int depth) {
 	MoveList moves;
 	init_move_list(&moves);
@@ -508,6 +514,7 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 	printf("MNps: %f\n", (float)nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
 	return best_move;
 }
+*/
 
 
 Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
@@ -560,5 +567,8 @@ void calc_mvv_lva_score(const Board* board, Move* move) {
 	enum Piece attacker = piece_at(board, move->from);
 	enum Piece victim   = piece_at(board, move->to);
 
-	move->mvv_lva_score += PIECE_VALUES[victim] - PIECE_VALUES[attacker];
+	move->mvv_lva_score += HISTORY_TABLE[move->from][move->to];
+	// printf("HISTORY_TABLE[%d][%d] = %f\n", move->from, move->to, HISTORY_TABLE[move->from][move->to]);
+	if (victim == EMPTY_PIECE) return;
+	move->mvv_lva_score += 10.0f * (PIECE_VALUES[victim] - PIECE_VALUES[attacker]);
 }

@@ -12,7 +12,7 @@ extern const float ROOK_VALUE;
 extern const float QUEEN_VALUE;
 extern const float KING_VALUE;
 
-extern const float PIECE_VALUES[7];
+extern const float PIECE_VALUES[6];
 
 extern const float PAWN_TABLE[64];
 extern const float KNIGHT_TABLE[64];
@@ -23,6 +23,8 @@ extern const float KING_TABLE[64];
 extern const float KING_TABLE_ENDGAME[64];
 
 extern const uint8_t FLIP_TABLE[64];
+
+extern float HISTORY_TABLE[64][64];
 
 float eval_pawns(const Board* board);
 float eval_knights(const Board* board);

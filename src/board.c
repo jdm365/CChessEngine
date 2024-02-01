@@ -7,6 +7,8 @@
 #include "board.h"
 
 
+uint16_t MOVE_NUMBER = 0;
+
 const char* STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
 const uint64_t FILE_A = 0x0101010101010101;
@@ -503,7 +505,7 @@ enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
 
 enum Piece piece_at(const Board* board, uint8_t square) {
 	for (int idx = 0; idx < 6; ++idx) {
-		if (board->pieces[idx] & (1ULL << square)) {
+		if ((board->pieces[idx] | board->pieces[idx + 6]) & (1ULL << square)) {
 			return idx;
 		}
 	}

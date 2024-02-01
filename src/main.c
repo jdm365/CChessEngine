@@ -10,6 +10,7 @@
 #include "gui.h"
 
 
+
 void play_self_with_gui(int max_depth) {
 	Board board;
 	init_board(&board);
@@ -38,11 +39,13 @@ void play_self_with_gui(int max_depth) {
 		printf("%s\n\n", translate_square_from_index(best_move.to));
 		reset_move_list(&moves);
 
+		MOVE_NUMBER += (color == BLACK);
+
 		gui_draw_board(&gui, &board, 64);
 
 		float eval = eval_board(&board);
 		char title[64];
-		sprintf(title, "Eval: %.2f", eval);
+		sprintf(title, "Eval: %.2f  Move: %d", eval, MOVE_NUMBER);
 		SDL_SetWindowTitle(gui.window, title);
 
 		print_bitboard(board.pieces[WHITE_KING] | board.pieces[BLACK_KING]);
@@ -98,11 +101,13 @@ void play_against_engine(int max_depth) {
 		gui_draw_board(&gui, &board, 64);
 		SDL_Delay(750);
 
-		Move best_move = get_best_move(&board, BLACK, max_depth);
+		// Move best_move = get_best_move(&board, BLACK, max_depth);
+		Move best_move = get_best_move_id(&board, BLACK, max_depth);
 		_make_move(&board, best_move.from, best_move.to);
 		printf("\nMove: %s", translate_square_from_index(best_move.from));
 		printf("%s\n\n", translate_square_from_index(best_move.to));
 		reset_move_list(&moves);
+		MOVE_NUMBER++;
 
 		gui_draw_board(&gui, &board, 64);
 
@@ -124,7 +129,7 @@ void play_against_engine(int max_depth) {
 		}
 		float eval = eval_board(&board);
 		char title[64];
-		sprintf(title, "Eval: %.2f", eval);
+		sprintf(title, "Eval: %.2f  Move: %d", eval, MOVE_NUMBER);
 		SDL_SetWindowTitle(gui.window, title);
 	}
 	quit:
@@ -136,7 +141,7 @@ int main() {
 	init_knight_moves();
 	init_king_moves();
 
-	const int MAX_DEPTH = 4;
+	const int MAX_DEPTH = 6;
 
 	// perf_test(MAX_DEPTH);
 	play_self_with_gui(MAX_DEPTH);

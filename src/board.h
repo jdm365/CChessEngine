@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+extern uint16_t MOVE_NUMBER;
+
 extern const char* STARTING_FEN;
 
 extern const uint64_t FILE_A;
