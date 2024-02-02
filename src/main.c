@@ -32,7 +32,6 @@ void play_self_with_gui(int max_depth) {
 
 		gui_draw_board(&gui, &board, 64);
 
-		// Move best_move = get_best_move(&board, color, max_depth);
 		Move best_move = get_best_move_id(&board, color, max_depth);
 		_make_move(&board, best_move.from, best_move.to);
 		printf("\nMove: %s", translate_square_from_index(best_move.from));
@@ -56,7 +55,6 @@ void play_self_with_gui(int max_depth) {
 			if (__builtin_popcountll(board.pieces[WHITE_KING]) > __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - White Wins");
 			} 
-			// else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
 			else if (__builtin_popcountll(board.pieces[WHITE_KING]) < __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - Black Wins");
 			} 
@@ -112,11 +110,9 @@ void play_against_engine(int max_depth) {
 		gui_draw_board(&gui, &board, 64);
 
 		if (game_over(&board)) {
-			// if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
 			if (__builtin_popcountll(board.pieces[WHITE_KING]) > __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - White Wins");
 			} 
-			// else if (__builtin_popcountll(board.white_king) < __builtin_popcountll(board.black_king)) {
 			else if (__builtin_popcountll(board.pieces[WHITE_KING]) < __builtin_popcountll(board.pieces[BLACK_KING])) {
 				SDL_SetWindowTitle(gui.window, "Game Over - Black Wins");
 			} 
@@ -143,8 +139,8 @@ int main() {
 
 	const int MAX_DEPTH = 6;
 
-	// perf_test(MAX_DEPTH);
-	play_self_with_gui(MAX_DEPTH);
+	perf_test(MAX_DEPTH);
+	// play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 	return 0;
 }

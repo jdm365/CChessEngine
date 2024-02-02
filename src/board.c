@@ -404,10 +404,10 @@ void _make_move(
 	// Check if castling
 	if (
 			(from_square == 4 || from_square == 60)
-				&& 
+				&&
 			(abs(from_square - to_square) == 2)
 				&&
-			((board->pieces[WHITE_KING] & (1ULL << from_square)) || (board->pieces[BLACK_KING] & (1ULL << from_square)))
+			((board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) & (1ULL << from_square))
 		) {
 		_castle(board, from_square, to_square);
 		return;
@@ -417,45 +417,51 @@ void _make_move(
 	uint64_t to_square_mask   = (1ULL << to_square);
 
 	// Get piece at from_square
-	uint8_t piece_idx = 0;
-	for (int idx = 1; idx < 12; ++idx) {
-		piece_idx += idx * ((board->pieces[idx] & from_square_mask) != 0);
-	}
-	enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
-
-	// Remove piece from from_square
-	board->pieces[piece] &= ~from_square_mask;
-
-	// Check promotion
-	/*
-	if (piece == WHITE_PAWN && to_square >= 56) {
-		piece = WHITE_QUEEN;
-	} else if (piece == BLACK_PAWN && to_square <= 7) {
-		piece = BLACK_QUEEN;
-	}
-	*/
-	piece += 4 * (piece == WHITE_PAWN && to_square >= 56);
-	piece += 4 * (piece == BLACK_PAWN && to_square <= 7);
-
-	// Remove any pieces from to_square
+	BitBoard pieces = 0;
 	for (int idx = 0; idx < 12; ++idx) {
+		pieces |= board->pieces[idx] & from_square_mask;
 		board->pieces[idx] &= ~to_square_mask;
 	}
+	uint8_t piece_idx = __builtin_ctzll(pieces);
+	// enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
+	
+	// Check promotion
+	piece_idx += 4 * (piece_idx == WHITE_PAWN && to_square >= 56);
+	piece_idx += 4 * (piece_idx == BLACK_PAWN && to_square <= 7);
 
+	// Remove piece from from_square
 	// Move piece to to_square
-	board->pieces[piece] |= to_square_mask;
+	board->pieces[piece_idx] &= ~from_square_mask;
+	board->pieces[piece_idx] |= to_square_mask;
+
+
+	// Remove any pieces from to_square
+	// for (int idx = 0; idx < 12; ++idx) {
+		// board->pieces[idx] &= ~to_square_mask;
+	// }
+
 }
 
-void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
+inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 	uint64_t from_square_mask = (1ULL << from_square);
 	uint64_t to_square_mask   = (1ULL << to_square);
 
 	uint8_t rook_from_square = (to_square > from_square) ? to_square + 1 : to_square - 2;
 	uint8_t rook_to_square   = (to_square > from_square) ? to_square - 1 : to_square + 1;
+
 	bool is_white = (from_square == 4);
 
 	// Remove king from from_square and rook from appropriate square
 	// Guaranteed no pieces captured, so don't remove anything from to squares.
+	enum ColoredPiece king = WHITE_KING + 6 * is_white;
+	enum ColoredPiece rook = WHITE_ROOK + 6 * is_white;
+
+	board->pieces[king] &= ~from_square_mask;
+	board->pieces[king] |= to_square_mask;
+
+	board->pieces[rook] &= ~(1ULL << rook_from_square);
+	board->pieces[rook] |= (1ULL << rook_to_square);
+	/*
 	if (is_white) {
 		board->pieces[WHITE_KING] &= ~from_square_mask;
 		board->pieces[WHITE_ROOK] &= ~(1ULL << rook_from_square);
@@ -470,9 +476,10 @@ void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 		board->pieces[BLACK_KING] |= to_square_mask;
 		board->pieces[BLACK_ROOK] |= (1ULL << rook_to_square);
 	}
+	*/
 }
 
-enum Color is_occupied_by(const Board* board, uint8_t square) {
+inline enum Color is_occupied_by(const Board* board, uint8_t square) {
 	BitBoard white_board = board->pieces[WHITE_PAWN];
 	for (int idx = 1; idx < 6; ++idx) {
 		white_board |= board->pieces[idx];
@@ -494,7 +501,7 @@ enum Color is_occupied_by(const Board* board, uint8_t square) {
 	return EMPTY;
 }
 
-enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
+inline enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
 	for (int idx = 0; idx < 12; ++idx) {
 		if (board->pieces[idx] & (1ULL << square)) {
 			return idx;
@@ -503,7 +510,7 @@ enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
 	return EMPTY_SQUARE;
 }
 
-enum Piece piece_at(const Board* board, uint8_t square) {
+inline enum Piece piece_at(const Board* board, uint8_t square) {
 	for (int idx = 0; idx < 6; ++idx) {
 		if ((board->pieces[idx] | board->pieces[idx + 6]) & (1ULL << square)) {
 			return idx;
@@ -513,11 +520,11 @@ enum Piece piece_at(const Board* board, uint8_t square) {
 }
 
 
-bool is_empty(const Board* board, uint8_t square) {
+inline bool is_empty(const Board* board, uint8_t square) {
 	return is_occupied_by(board, square) == EMPTY;
 }
 
-BitBoard get_occupied_squares(const Board* board) {
+inline BitBoard get_occupied_squares(const Board* board) {
 	BitBoard occupied_squares = board->pieces[WHITE_PAWN];
 	for (int idx = 1; idx < 12; ++idx) {
 		occupied_squares |= board->pieces[idx];
@@ -526,7 +533,7 @@ BitBoard get_occupied_squares(const Board* board) {
 	return occupied_squares;
 }
 
-BitBoard get_occupied_squares_color(const Board* board, enum Color color) {
+inline BitBoard get_occupied_squares_color(const Board* board, enum Color color) {
 	if (color == WHITE) {
 		BitBoard occupied_squares = board->pieces[WHITE_PAWN];
 		for (int idx = 1; idx < 6; ++idx) {

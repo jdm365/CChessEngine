@@ -9,7 +9,7 @@
 #include "movegen.h"
 #include "eval.h"
 
-static uint8_t min(const uint8_t a, const uint8_t b) {
+static inline uint8_t min(const uint8_t a, const uint8_t b) {
 	return a < b ? a : b;
 }
 
@@ -17,7 +17,7 @@ void init_move_list(MoveList* list) {
 	list->count = 0;
 }
 
-void reset_move_list(MoveList* list) {
+inline void reset_move_list(MoveList* list) {
 	list->count = 0;
 }
 
@@ -126,7 +126,6 @@ void get_pawn_moves_piece(
 			}
 		}
 	}
-	// if (color == BLACK) {
 	else {
 		if (can_capture_left) {
 			uint8_t capture_left = square - 9;
@@ -145,12 +144,12 @@ void get_pawn_moves_piece(
 	// TODO: En passant. In the future. Last move dependence.
 }
 
+/*
 void get_pawn_moves(
 		const Board* board, 
 		MoveList* list, 
 		enum Color color
 		) {
-	// BitBoard pawns = (color == WHITE) ? board->pieces[WHITE_PAWN] : board->pieces[BLACK_PAWN];
 	BitBoard pawns = board->pieces[WHITE_PAWN + 6 * color];
 
 	while (pawns) {
@@ -159,32 +158,56 @@ void get_pawn_moves(
 		pawns &= pawns - 1;
 	}
 }
+*/
 
-/*
 void get_pawn_moves(
 		const Board* board, 
 		MoveList* list, 
 		enum Color color
 		) {
-	BitBoard pawns = color == WHITE ? board->white_pawns : board->black_pawns;
+	BitBoard pawns = board->pieces[WHITE_PAWN + 6 * color];
+
 	BitBoard occupied = get_occupied_squares(board);
 	BitBoard opposing = get_occupied_squares_color(board, !color);
 
-	BitBoard one_forward = color == WHITE ? pawns << 8 : pawns >> 8;
-	BitBoard two_forward = color == WHITE ? pawns << 16 : pawns >> 16;
+	BitBoard one_forward = (color == WHITE) ? (pawns << 8) : (pawns >> 8);
 
-	BitBoard left_capture  = color == WHITE ? pawns << 7 : pawns >> 9;
-	BitBoard right_capture = color == WHITE ? pawns << 9 : pawns >> 7;
+	BitBoard left_capture  = (color == WHITE) ? pawns << 7 : pawns >> 9;
+	BitBoard right_capture = (color == WHITE) ? pawns << 9 : pawns >> 7;
 
-	BitBoard one_forward_empty = one_forward & ~occupied;
-	BitBoard two_forward_empty = two_forward & ~occupied;
-	two_forward_empty &= one_forward_empty;
-	two_forward_empty &= (color == WHITE ? RANK_2 : RANK_7);
+	BitBoard one_forward_moves = one_forward & ~occupied;
+	BitBoard two_forward_moves = (color == WHITE) 
+								 ? ((one_forward_moves & RANK_3) << 8) 
+								 : ((one_forward_moves & RANK_6) >> 8);
+	two_forward_moves &= ~occupied;
 
-	BitBoard left_capture_opposing  = left_capture & opposing;
-	BitBoard right_capture_opposing = right_capture & opposing;
+	BitBoard left_capture_moves  = left_capture & opposing;
+	BitBoard right_capture_moves = right_capture & opposing;
+
+	while (one_forward_moves) {
+		uint8_t square = __builtin_ctzll(one_forward_moves);
+		add_move(list, square - (color == WHITE ? 8 : -8), square);
+		one_forward_moves &= one_forward_moves - 1;
+	}
+
+	while (two_forward_moves) {
+		uint8_t square = __builtin_ctzll(two_forward_moves);
+		add_move(list, square - (color == WHITE ? 16 : -16), square);
+		two_forward_moves &= two_forward_moves - 1;
+	}
+
+	while (left_capture_moves) {
+		uint8_t square = __builtin_ctzll(left_capture_moves);
+		add_move(list, square - (color == WHITE ? 7 : -7), square);
+		left_capture_moves &= left_capture_moves - 1;
+	}
+
+	while (right_capture_moves) {
+		uint8_t square = __builtin_ctzll(right_capture_moves);
+		add_move(list, square - (color == WHITE ? 9 : -9), square);
+		right_capture_moves &= right_capture_moves - 1;
+	}
 }
-*/
 
 void get_knight_moves_piece(
 		const Board* board,
@@ -208,7 +231,6 @@ void get_knight_moves(
 		MoveList* list,
 		enum Color color
 		) {
-	// BitBoard knights = (color == WHITE) ? board->pieces[WHITE_KNIGHT] : board->pieces[BLACK_KNIGHT];
 	BitBoard knights = board->pieces[WHITE_KNIGHT + 6 * color];
 	BitBoard self_mask = get_occupied_squares_color(board, color);
 
@@ -653,6 +675,8 @@ void perf_test(int max_depth) {
 	Board board;
 	init_board(&board);
 	populate_board_from_fen(&board, STARTING_FEN);
+
+	print_legal_moves(&board, WHITE);
 
     uint64_t nodes_visited = 0;
 

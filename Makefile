@@ -3,8 +3,8 @@ PROJECT_NAME = $(shell basename "$(realpath ./)")
 
 CXX = clang
 ## CXX = gcc
-CXXFLAGS = -Wall -g -O3 -ffast-math -march=native
-CXXFLAGS += -mpopcnt
+CXXFLAGS = -Wall -g -O3 -ffast-math
+CXXFLAGS += -mpopcnt -march=native -mtune=native
 CXXFLAGS += -Wno-format
 OS = $(shell uname -s)
 ifeq ($(OS), Darwin)
