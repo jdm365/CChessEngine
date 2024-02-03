@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <immintrin.h>
+#include <stdint.h>
 
 #include "board.h"
 
@@ -33,6 +33,10 @@ uint64_t PAWN_MOVES[2][64];
 uint64_t PAWN_ATTACKS[2][64];
 uint64_t KNIGHT_MOVES[64];
 uint64_t KING_MOVES[64];
+
+BitBoard BISHOP_MASKS[64];
+uint64_t BISHOP_MAGICS[64];
+BitBoard BISHOP_MOVES[64][512];
 
 void init_pawn_moves() {
 	for (int square = 0; square < 64; square++) {
@@ -144,6 +148,263 @@ void init_king_moves() {
 		KING_MOVES[square] = king_moves;
 	}
 }
+
+static void init_bishop_masks() {
+	for (int square_idx = 0; square_idx < 64; ++square_idx) {
+		BISHOP_MASKS[square_idx] = 0;
+
+		int rank = square_idx / 8;
+		int file = square_idx % 8;
+		int start_rank = rank;
+		int start_file = file;
+
+		// while (rank < 7 && file < 7) {
+		while (rank < 6 && file < 6) {
+			++rank;
+			++file;
+			BISHOP_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		// while (rank > 0 && file < 7) {
+		while (rank > 1 && file < 6) {
+			--rank;
+			++file;
+			BISHOP_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		// while (rank < 7 && file > 0) {
+		while (rank < 6 && file > 1) {
+			++rank;
+			--file;
+			BISHOP_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		// while (rank > 0 && file > 0) {
+		while (rank > 1 && file > 1) {
+			--rank;
+			--file;
+			BISHOP_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+	}
+}
+
+static BitBoard generate_bishop_moves(BitBoard* occupancy, int square) {
+	BitBoard moves = 0;
+
+	int rank = square / 8;
+	int file = square % 8;
+	int start_rank = rank;
+	int start_file = file;
+
+	while (rank < 7 && file < 7) {
+		++rank;
+		++file;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	rank = start_rank;
+	file = start_file;
+
+	while (rank > 0 && file < 7) {
+		--rank;
+		++file;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	rank = start_rank;
+	file = start_file;
+
+	while (rank < 7 && file > 0) {
+		++rank;
+		--file;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	rank = start_rank;
+	file = start_file;
+
+	while (rank > 0 && file > 0) {
+		--rank;
+		--file;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	return moves;
+}
+
+static void generate_occupancy_variants(
+		BitBoard mask, 
+		BitBoard* variants, 
+		int* num_variants
+		) {
+	int n = __builtin_popcountll(mask);
+	*num_variants = 1 << n;
+
+    for (int idx = 0; idx < *num_variants; ++idx) {
+        BitBoard subset    = 0;
+        BitBoard temp_mask = mask;
+
+        for (int jdx = 0; jdx < n; ++jdx) {
+            int square = __builtin_ctzll(temp_mask);
+            temp_mask &= ~(1ULL << square);
+
+            if (idx & (1 << jdx)) {
+                subset |= (1ULL << square);
+            }
+        }
+
+		if (idx >= 4096) {
+			printf("Index overflow generating occupancy variants\n");
+			printf("Num variants: %d\n", *num_variants);
+			exit(1);
+		}
+        variants[idx] = subset;
+    }
+}
+
+static uint64_t xorshift64_state = 88172645463325252ULL;
+
+static uint64_t random_uint64() {
+	xorshift64_state ^= xorshift64_state >> 12;
+    xorshift64_state ^= xorshift64_state << 25;
+    xorshift64_state ^= xorshift64_state >> 27;
+    return xorshift64_state * 2685821657736338717LL;
+
+}
+
+inline uint64_t magic_hash(uint64_t occupancy, uint64_t magic, int bits) {
+	return (occupancy * magic) >> (64 - bits);
+}
+
+static bool validate_magic_number(
+		int square, 
+		uint64_t magic, 
+		BitBoard* variants, 
+		int num_variants
+		) {
+	/************************************************************
+	For a bishop on the given square, generate all possible relevant occupancies.
+	For each occupancy and the candidate magic number, compute the index by calculating
+	the magic hash.
+	If the hash for each occupancy and the given magic number is unique, then the magic
+	number is valid.
+	************************************************************/
+
+	uint64_t attack_table[4096] = {0};
+
+	for (int idx = 0; idx < num_variants; ++idx) {
+		BitBoard occupancy = variants[idx];
+
+		uint64_t index = magic_hash(
+				occupancy, 
+				magic, 
+				__builtin_popcountll(BISHOP_MASKS[square])
+				);
+
+		if (attack_table[index] == 0) {
+			// First time we've seen this index. Store the attack table
+			attack_table[index] = generate_bishop_moves(&occupancy, square);
+		} 
+		else if (attack_table[index] != generate_bishop_moves(&occupancy, square)) {
+			// This magic number produces more than one variant with the same index.
+			// It's not a valid magic number.
+			return false;
+		}
+	}
+
+	// All variants produce unique attack tables for the given index.
+	// This is a valid magic number.
+
+	return true;
+}
+
+static uint64_t find_magic_number_bishop(int square) {
+	// 4096 is the maximum possible occupancy variants for a bishop
+	BitBoard variants[4096];
+	int num_variants;
+	generate_occupancy_variants(
+			BISHOP_MASKS[square],
+			variants,
+			&num_variants
+			);
+
+	int num_trials = 0;
+    while (true) {
+        uint64_t candidate_magic_number = random_uint64() & random_uint64() & random_uint64();
+        if (validate_magic_number(square, candidate_magic_number, variants, num_variants)) {
+            return candidate_magic_number;
+        }
+		++num_trials;
+
+		// if (num_trials > 10000000) {
+			// printf("Exceeded 10,000,000 trials for square %d\n", square);
+			// printf("Num variants: %d\n", num_variants);
+			// exit(1);
+		// }
+    }
+
+	printf("Failed to find a magic number for square %d\n", square);
+	exit(1);
+}
+
+static void init_bishop_magics() {
+	for (int square = 0; square < 64; ++square) {
+		BISHOP_MAGICS[square] = find_magic_number_bishop(square);
+	}
+}
+
+void init_bishop_moves() {
+	init_bishop_masks();
+	init_bishop_magics();
+
+	for (int square = 0; square < 64; ++square) {
+		BitBoard occupancy_variants[4096];
+		int num_variants;
+		generate_occupancy_variants(
+				BISHOP_MASKS[square], 
+				occupancy_variants, 
+				&num_variants
+				);
+
+		for (int idx = 0; idx < num_variants; ++idx) {
+			BitBoard occupancy = occupancy_variants[idx];
+			int index = magic_hash(
+					occupancy, 
+					BISHOP_MAGICS[square], 
+					__builtin_popcountll(BISHOP_MASKS[square])
+					);
+			BISHOP_MOVES[square][index] = generate_bishop_moves(&occupancy, square);
+		}
+	}
+	// Now to get move at runtime, we can do:
+	// BISHOP_MOVES[square][magic_hash(occupancy, BISHOP_MAGICS[square], __builtin_popcountll(BISHOP_MASKS[square]))]
+}
+
 
 void init_board(Board* board) {
 	memset(board->pieces, 0, sizeof(board->pieces));

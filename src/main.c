@@ -140,6 +140,7 @@ int main() {
 	init_pawn_moves();
 	init_knight_moves();
 	init_king_moves();
+	init_bishop_moves();
 
 	const int MAX_DEPTH = 4;
 

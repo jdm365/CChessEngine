@@ -34,6 +34,20 @@ void init_pawn_moves();
 void init_knight_moves();
 void init_king_moves();
 
+typedef uint64_t BitBoard;
+typedef struct {
+	BitBoard pieces[12];
+} Board;
+
+// Magic bitboards
+extern BitBoard BISHOP_MASKS[64];
+extern uint64_t BISHOP_MAGICS[64];
+extern uint8_t  BISHOP_INDEX_BITS[64];
+extern BitBoard BISHOP_MOVES[64][512];
+
+uint64_t magic_hash(uint64_t occupancy, uint64_t magic, int bits);
+void init_bishop_moves();
+
 enum Piece {
 	PAWN,
 	KNIGHT,
@@ -65,11 +79,6 @@ enum ColoredPiece {
 
 	EMPTY_SQUARE
 };
-
-typedef uint64_t BitBoard;
-typedef struct {
-	BitBoard pieces[12];
-} Board;
 
 void init_board(Board* board);
 void set_bit(BitBoard* board, int index);
