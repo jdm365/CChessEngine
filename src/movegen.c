@@ -13,6 +13,15 @@ static inline uint8_t min(const uint8_t a, const uint8_t b) {
 	return a < b ? a : b;
 }
 
+inline void create_move(Move* move, uint8_t from, uint8_t to) {
+	*move = (from & SQUARE_IDX_MASK) | (to << DST_SQUARE_SHIFT);
+}
+
+inline void decode_move(const Move* move, uint8_t* from, uint8_t* to) {
+	*from = *move & SQUARE_IDX_MASK;
+	*to   = (*move >> DST_SQUARE_SHIFT) & SQUARE_IDX_MASK;
+}
+
 void init_move_list(MoveList* list) {
 	list->count = 0;
 }
@@ -21,9 +30,8 @@ inline void reset_move_list(MoveList* list) {
 	list->count = 0;
 }
 
-void add_move(MoveList* list, uint8_t from, uint8_t to) {
-	list->moves[list->count].from = from;
-	list->moves[list->count].to   = to;
+void add_move(MoveList* list, Move move) {
+	list->moves[list->count] = move;
 	++list->count;
 
 	if (list->count == 267) {
@@ -31,25 +39,30 @@ void add_move(MoveList* list, uint8_t from, uint8_t to) {
 		exit(1);
 	}
 
-	list->moves[list->count].mvv_lva_score = 0.0f;
+	list->move_scores[list->count] = 0.0f;
 }
 
 Move get_move_from_string(const char* move) {
 	char from[2] = {move[0], move[1]};
 	char to[2]   = {move[2], move[3]};
-	Move m = {
-		translate_square_from_char(from),
-		translate_square_from_char(to)
-	};
+	uint8_t from_index = translate_square_from_char(from);
+	uint8_t to_index   = translate_square_from_char(to);
+
+	Move m;
+	create_move(&m, from_index, to_index);
+
 	return m;
 }
 
 const char* get_string_from_move(Move move) {
+	uint8_t from, to;
+	decode_move(&move, &from, &to);
+
 	static char str[5];
-	str[0] = translate_square_from_index(move.from)[0];
-	str[1] = translate_square_from_index(move.from)[1];
-	str[2] = translate_square_from_index(move.to)[0];
-	str[3] = translate_square_from_index(move.to)[1];
+	str[0] = translate_square_from_index(from)[0];
+	str[1] = translate_square_from_index(from)[1];
+	str[2] = translate_square_from_index(to)[0];
+	str[3] = translate_square_from_index(to)[1];
 	str[4] = '\0';
 	return str;
 }
@@ -57,7 +70,7 @@ const char* get_string_from_move(Move move) {
 bool is_move_legal(MoveList* legal_moves, Move move) {
 	for (int idx = 0; idx < legal_moves->count; ++idx) {
 		Move m = legal_moves->moves[idx];
-		if (m.from == move.from && m.to == move.to) {
+		if (m == move) {
 			return true;
 		}
 	}
@@ -77,8 +90,8 @@ void print_legal_moves(const Board* board, enum Color color) {
 	printf("Number of moves: %d\n", list.count);
 	for (int idx = 0; idx < list.count; ++idx) {
 		Move move = list.moves[idx];
-		printf("%s", translate_square_from_index(move.from));
-		printf("%s\n", translate_square_from_index(move.to));
+		printf("%s", translate_square_from_index(move & SQUARE_IDX_MASK));
+		printf("%s\n", translate_square_from_index((move >> DST_SQUARE_SHIFT) & SQUARE_IDX_MASK));
 	}
 }
 
@@ -96,13 +109,17 @@ void get_pawn_moves_piece(
 
 	// Forward moves
 	uint8_t one_forward = square + (color == WHITE ? 8 : -8);
+
+	Move move = 0;
 	if (is_empty(board, one_forward)) {
-		add_move(list, square, one_forward);
+		create_move(&move, square, one_forward);
+		add_move(list, move);
 
 		if (is_starting_rank) {
 			uint8_t two_forward = square + (color == WHITE ? 16 : -16);
 			if (is_empty(board, two_forward)) {
-				add_move(list, square, two_forward);
+				create_move(&move, square, two_forward);
+				add_move(list, move);
 			}
 		}
 	}
@@ -115,14 +132,16 @@ void get_pawn_moves_piece(
 		if (can_capture_left) {
 			uint8_t capture_left = square + 7;
 			if (is_occupied_by(board, capture_left) == BLACK) {
-				add_move(list, square, capture_left);
+				create_move(&move, square, capture_left);
+				add_move(list, move);
 			}
 		}
 
 		if (can_capture_right) {
 			uint8_t capture_right = square + 9;
 			if (is_occupied_by(board, capture_right) == BLACK) {
-				add_move(list, square, capture_right);
+				create_move(&move, square, capture_right);
+				add_move(list, move);
 			}
 		}
 	}
@@ -130,14 +149,16 @@ void get_pawn_moves_piece(
 		if (can_capture_left) {
 			uint8_t capture_left = square - 9;
 			if (is_occupied_by(board, capture_left) == WHITE) {
-				add_move(list, square, capture_left);
+				create_move(&move, square, capture_left);
+				add_move(list, move);
 			}
 		}
 
 		if (can_capture_right) {
 			uint8_t capture_right = square - 7;
 			if (is_occupied_by(board, capture_right) == WHITE) {
-				add_move(list, square, capture_right);
+				create_move(&move, square, capture_right);
+				add_move(list, move);
 			}
 		}
 	}
@@ -158,7 +179,7 @@ void get_pawn_moves(
 	}
 }
 
-void get_knight_moves_piece(
+inline void get_knight_moves_piece(
 		const Board* board,
 		MoveList* list,
 		const BitBoard* self_mask,
@@ -168,9 +189,11 @@ void get_knight_moves_piece(
 	uint64_t moves = KNIGHT_MOVES[square];
 	moves &= ~*self_mask;
 
+	Move move = 0;
 	while (moves) {
-		uint8_t move = __builtin_ctzll(moves);
-		add_move(list, square, move);
+		uint8_t to = __builtin_ctzll(moves);
+		create_move(&move, square, to);
+		add_move(list, move);
 		moves &= moves - 1;
 	}
 }
@@ -204,15 +227,19 @@ void get_bishop_moves_piece(
 	uint8_t lower_right_range = min(rank, 7 - file);
 	uint8_t lower_left_range  = min(rank, file);
 
+	Move move = 0;
+
 	if (upper_left_range > 0) {
 		uint8_t local_rank = rank + 1;
 		uint8_t local_file = file - 1;
 
 		while (local_rank <= 7 && local_file >= 0) {
-			uint8_t move = local_rank * 8 + local_file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = local_rank * 8 + local_file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				if (local_file == 0) {
 					break;
 				}
@@ -224,7 +251,7 @@ void get_bishop_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -235,10 +262,12 @@ void get_bishop_moves_piece(
 		uint8_t local_file = file + 1;
 
 		while (local_rank <= 7 && local_file <= 7) {
-			uint8_t move = local_rank * 8 + local_file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = local_rank * 8 + local_file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				local_rank++;
 				local_file++;
 				continue;
@@ -247,7 +276,7 @@ void get_bishop_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -258,10 +287,12 @@ void get_bishop_moves_piece(
 		uint8_t local_file = file + 1;
 
 		while (local_rank >= 0 && local_file <= 7) {
-			uint8_t move = local_rank * 8 + local_file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = local_rank * 8 + local_file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				if (local_rank == 0) {
 					break;
 				}
@@ -273,7 +304,7 @@ void get_bishop_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -284,10 +315,12 @@ void get_bishop_moves_piece(
 		uint8_t local_file = file - 1;
 
 		while (local_rank >= 0 && local_file >= 0) {
-			uint8_t move = local_rank * 8 + local_file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = local_rank * 8 + local_file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 
 				if (local_rank == 0 || local_file == 0) {
 					break;
@@ -300,7 +333,7 @@ void get_bishop_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -336,14 +369,18 @@ void get_rook_moves_piece(
 	uint8_t lower_range = rank;
 	uint8_t left_range  = file;
 
+	Move move = 0;
+
 	if (upper_range > 0) {
 		uint8_t local_rank = rank + 1;
 
 		while (local_rank <= 7) {
-			uint8_t move = local_rank * 8 + file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = local_rank * 8 + file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				if (local_rank == 0) {
 					break;
 				}
@@ -354,7 +391,7 @@ void get_rook_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -364,10 +401,12 @@ void get_rook_moves_piece(
 		uint8_t local_file = file + 1;
 
 		while (local_file <= 7) {
-			uint8_t move = rank * 8 + local_file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = rank * 8 + local_file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				local_file++;
 				continue;
 			}
@@ -375,7 +414,7 @@ void get_rook_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -385,10 +424,12 @@ void get_rook_moves_piece(
 		uint8_t local_rank = rank - 1;
 
 		while (local_rank >= 0) {
-			uint8_t move = local_rank * 8 + file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = local_rank * 8 + file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				if (local_rank == 0) {
 					break;
 				}
@@ -399,7 +440,7 @@ void get_rook_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -409,10 +450,12 @@ void get_rook_moves_piece(
 		uint8_t local_file = file - 1;
 
 		while (local_file >= 0) {
-			uint8_t move = rank * 8 + local_file;
-			enum Color occupant = is_occupied_by(board, move);
+			uint8_t to = rank * 8 + local_file;
+			enum Color occupant = is_occupied_by(board, to);
+			create_move(&move, square, to);
+
 			if (occupant == EMPTY) {
-				add_move(list, square, move);
+				add_move(list, move);
 				if (local_file == 0) {
 					break;
 				}
@@ -423,7 +466,7 @@ void get_rook_moves_piece(
 				break;
 			}
 			else {
-				add_move(list, square, move);
+				add_move(list, move);
 				break;
 			}
 		}
@@ -484,9 +527,11 @@ void get_king_moves(
 	BitBoard mask = get_occupied_squares_color(board, color);
 	uint64_t moves = KING_MOVES[square] & ~mask;
 
+	Move move = 0;
 	while (moves) {
-		uint8_t move = __builtin_ctzll(moves);
-		add_move(list, square, move);
+		uint8_t to = __builtin_ctzll(moves);
+		create_move(&move, square, to);
+		add_move(list, move);
 		moves &= moves - 1;
 	}
 
@@ -511,7 +556,8 @@ void get_king_moves(
 				&&
 			!(occupied & (1ULL << (starting_square_king + 2)))
 	   ) {
-		add_move(list, square, square + 2);
+		create_move(&move, square, square + 2);
+		add_move(list, move);
 	}
 
 	if (
@@ -523,7 +569,8 @@ void get_king_moves(
 				&&
 			!(occupied & (1ULL << (starting_square_king - 3)))
 	   ) {
-		add_move(list, square, square - 2);
+		create_move(&move, square, square - 2);
+		add_move(list, move);
 	}
 }
 
@@ -559,16 +606,22 @@ static inline void quicksort(Move* moves, int low, int high) {
 }
 */
 
-static inline void insertion_sort(Move* moves, int n) {
-    for (int i = 1; i < n; i++) {
-        Move key = moves[i];
+static inline void insertion_sort(MoveList* list) {
+	uint16_t count = list->count;
+
+    for (int i = 1; i < count; ++i) {
+        float key_score = list->move_scores[i];
+		Move key = list->moves[i];
+
         int j = i - 1;
 
-        while (j >= 0 && moves[j].mvv_lva_score < key.mvv_lva_score) {
-            moves[j + 1] = moves[j];
-            j = j - 1;
+        while (j >= 0 && list->move_scores[j] < key_score) {
+			list->move_scores[j + 1] = list->move_scores[j];
+			list->moves[j + 1] = list->moves[j];
+			--j;
         }
-        moves[j + 1] = key;
+		list->move_scores[j + 1] = key_score;
+		list->moves[j + 1] = key;
     }
 }
 
@@ -592,7 +645,7 @@ void get_legal_moves(
 
 	// Sort moves
 	// quicksort(list->moves, 0, list->count - 1);
-	insertion_sort(list->moves, list->count);
+	insertion_sort(list);
 }
 
 static void search_legal_moves(
@@ -611,8 +664,11 @@ static void search_legal_moves(
 		++(*nodes_visited);
 
 		Move move = list.moves[idx];
+		uint8_t from, to;
+		decode_move(&move, &from, &to);
+
 		Board new_board = *board;
-		_make_move(&new_board, move.from, move.to);
+		_make_move(&new_board, from, to);
 
 		search_legal_moves(&new_board, !color, max_depth - 1, nodes_visited);
 	}
@@ -634,7 +690,7 @@ void perf_test(int max_depth) {
 
 	double time_spent = (double)(end - start) / CLOCKS_PER_SEC;
 	printf("=====================================================\n");
-	printf("==                    MOVEGEN PERF                 ==\n");
+	printf("==                   MOVEGEN PERF                  ==\n");
 	printf("=====================================================\n");
 	printf("Time spent:    %f\n", time_spent);
 	printf("Nodes visited: %llu\n", nodes_visited);

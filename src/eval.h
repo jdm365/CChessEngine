@@ -45,5 +45,5 @@ float minimax(
 
 Move get_best_move(const Board* board, enum Color color, int depth);
 Move get_best_move_id(const Board* board, enum Color color, int max_depth);
-void calc_mvv_lva_score(const Board* board, Move* move);
+float calc_mvv_lva_score(const Board* board, const Move* move);
 BitBoard get_pawn_attacks(BitBoard pawns, enum Color color);

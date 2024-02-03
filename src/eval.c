@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
 
 #include "board.h"
@@ -431,7 +430,6 @@ float minimax(
 		float beta,
 		uint64_t* nodes_visited
 		) {
-	// float maximizing_factor = (color == WHITE) ? 1.0f : -1.0f;
 	float maximizing_factor = (1.0f - 2.0f * color);
 
 	if ((depth == max_depth) || game_over(board)) {
@@ -453,7 +451,10 @@ float minimax(
 		++*nodes_visited;
 		Move move = moves.moves[idx];
 		Board new_board = *board;
-		_make_move(&new_board, move.from, move.to);
+		uint8_t from, to;
+		decode_move(&move, &from, &to);
+
+		_make_move(&new_board, from, to);
 		float score = -minimax(
 				&new_board, 
 				!color, 
@@ -470,7 +471,7 @@ float minimax(
 			alpha = score;
 		}
 		if (alpha >= beta) {
-			HISTORY_TABLE[move.from][move.to] += 0.000001f * ((float)depth * (float)depth);
+			HISTORY_TABLE[from][to] += 0.000001f * ((float)depth * (float)depth);
 			break;
 		}
 	}
@@ -536,7 +537,10 @@ Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
 
             Move move = moves.moves[idx];
             Board new_board = *board;
-            _make_move(&new_board, move.from, move.to);
+
+			uint8_t from, to;
+			decode_move(&move, &from, &to);
+            _make_move(&new_board, from, to);
             float score = -minimax(
                 &new_board, 
                 !color, 
@@ -563,12 +567,15 @@ Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
     return best_move;
 }
 
-void calc_mvv_lva_score(const Board* board, Move* move) {
-	enum Piece attacker = piece_at(board, move->from);
-	enum Piece victim   = piece_at(board, move->to);
+inline float calc_mvv_lva_score(const Board* board, const Move* move) {
+	uint8_t from, to;
+	decode_move(move, &from, &to);
 
-	move->mvv_lva_score += HISTORY_TABLE[move->from][move->to];
-	// printf("HISTORY_TABLE[%d][%d] = %f\n", move->from, move->to, HISTORY_TABLE[move->from][move->to]);
-	if (victim == EMPTY_PIECE) return;
-	move->mvv_lva_score += 10.0f * (PIECE_VALUES[victim] - PIECE_VALUES[attacker]);
+	enum Piece attacker = piece_at(board, from);
+	enum Piece victim   = piece_at(board, to);
+
+	float score = HISTORY_TABLE[from][to];
+	if (victim == EMPTY_PIECE) return score;
+	score += 10.0f * (PIECE_VALUES[victim] - PIECE_VALUES[attacker]);
+	return score;
 }

@@ -33,19 +33,23 @@ void play_self_with_gui(int max_depth) {
 		gui_draw_board(&gui, &board, 64);
 
 		Move best_move = get_best_move_id(&board, color, max_depth);
-		_make_move(&board, best_move.from, best_move.to);
-		printf("\nMove: %s", translate_square_from_index(best_move.from));
-		printf("%s\n\n", translate_square_from_index(best_move.to));
+		uint8_t from, to;
+		decode_move(&best_move, &from, &to);
+
+		_make_move(&board, from, to);
 		reset_move_list(&moves);
 
 		MOVE_NUMBER += (color == BLACK);
 
-		gui_draw_board(&gui, &board, 64);
+		printf("\nMove: %s", translate_square_from_index(from));
+		printf("%s\n\n", translate_square_from_index(to));
 
 		float eval = eval_board(&board);
 		char title[64];
 		sprintf(title, "Eval: %.2f  Move: %d", eval, MOVE_NUMBER);
 		SDL_SetWindowTitle(gui.window, title);
+
+		gui_draw_board(&gui, &board, 64);
 
 		if (game_over(&board)) {
 			// if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
@@ -98,9 +102,12 @@ void play_against_engine(int max_depth) {
 
 		// Move best_move = get_best_move(&board, BLACK, max_depth);
 		Move best_move = get_best_move_id(&board, BLACK, max_depth);
-		_make_move(&board, best_move.from, best_move.to);
-		printf("\nMove: %s", translate_square_from_index(best_move.from));
-		printf("%s\n\n", translate_square_from_index(best_move.to));
+		uint8_t from, to;
+		decode_move(&best_move, &from, &to);
+
+		_make_move(&board, from, to);
+		printf("\nMove: %s", translate_square_from_index(from));
+		printf("%s\n\n", translate_square_from_index(to));
 		reset_move_list(&moves);
 		MOVE_NUMBER++;
 
@@ -136,8 +143,8 @@ int main() {
 
 	const int MAX_DEPTH = 4;
 
-	// perf_test(MAX_DEPTH);
-	play_self_with_gui(MAX_DEPTH);
+	perf_test(MAX_DEPTH);
+	// play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 	return 0;
 }

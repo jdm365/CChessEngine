@@ -223,15 +223,16 @@ bool gui_handle_player_loop(struct GUI* gui, Board* board) {
 			continue;
 
 			make_move: {
-				Move move = {src_square, dst_square, 0.0f};
+				Move move;
+				create_move(&move, src_square, dst_square);
 
 				if (is_move_legal(&moves, move)) {
-					_make_move(board, move.from, move.to);
+					_make_move(board, src_square, dst_square);
 					return false;
 				}
 				printf("Illegal move!\n");
-				printf("Move: %s", translate_square_from_index(move.from));
-				printf("%s\n", translate_square_from_index(move.to));
+				printf("Move: %s", translate_square_from_index(src_square));
+				printf("%s\n", translate_square_from_index(dst_square));
 
 
 				num_clicks = 0;
