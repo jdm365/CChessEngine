@@ -144,7 +144,6 @@ void get_pawn_moves_piece(
 	// TODO: En passant. In the future. Last move dependence.
 }
 
-/*
 void get_pawn_moves(
 		const Board* board, 
 		MoveList* list, 
@@ -156,56 +155,6 @@ void get_pawn_moves(
 		uint8_t square = __builtin_ctzll(pawns);
 		get_pawn_moves_piece(board, list, square, color);
 		pawns &= pawns - 1;
-	}
-}
-*/
-
-void get_pawn_moves(
-		const Board* board, 
-		MoveList* list, 
-		enum Color color
-		) {
-	BitBoard pawns = board->pieces[WHITE_PAWN + 6 * color];
-
-	BitBoard occupied = get_occupied_squares(board);
-	BitBoard opposing = get_occupied_squares_color(board, !color);
-
-	BitBoard one_forward = (color == WHITE) ? (pawns << 8) : (pawns >> 8);
-
-	BitBoard left_capture  = (color == WHITE) ? pawns << 7 : pawns >> 9;
-	BitBoard right_capture = (color == WHITE) ? pawns << 9 : pawns >> 7;
-
-	BitBoard one_forward_moves = one_forward & ~occupied;
-	BitBoard two_forward_moves = (color == WHITE) 
-								 ? ((one_forward_moves & RANK_3) << 8) 
-								 : ((one_forward_moves & RANK_6) >> 8);
-	two_forward_moves &= ~occupied;
-
-	BitBoard left_capture_moves  = left_capture & opposing;
-	BitBoard right_capture_moves = right_capture & opposing;
-
-	while (one_forward_moves) {
-		uint8_t square = __builtin_ctzll(one_forward_moves);
-		add_move(list, square - (color == WHITE ? 8 : -8), square);
-		one_forward_moves &= one_forward_moves - 1;
-	}
-
-	while (two_forward_moves) {
-		uint8_t square = __builtin_ctzll(two_forward_moves);
-		add_move(list, square - (color == WHITE ? 16 : -16), square);
-		two_forward_moves &= two_forward_moves - 1;
-	}
-
-	while (left_capture_moves) {
-		uint8_t square = __builtin_ctzll(left_capture_moves);
-		add_move(list, square - (color == WHITE ? 7 : -7), square);
-		left_capture_moves &= left_capture_moves - 1;
-	}
-
-	while (right_capture_moves) {
-		uint8_t square = __builtin_ctzll(right_capture_moves);
-		add_move(list, square - (color == WHITE ? 9 : -9), square);
-		right_capture_moves &= right_capture_moves - 1;
 	}
 }
 
@@ -534,7 +483,6 @@ void get_king_moves(
 
 	BitBoard mask = get_occupied_squares_color(board, color);
 	uint64_t moves = KING_MOVES[square] & ~mask;
-	moves &= ~mask;
 
 	while (moves) {
 		uint8_t move = __builtin_ctzll(moves);

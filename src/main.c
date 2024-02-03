@@ -47,9 +47,6 @@ void play_self_with_gui(int max_depth) {
 		sprintf(title, "Eval: %.2f  Move: %d", eval, MOVE_NUMBER);
 		SDL_SetWindowTitle(gui.window, title);
 
-		print_bitboard(board.pieces[WHITE_KING] | board.pieces[BLACK_KING]);
-		printf("Eval: %.2f\n", eval);
-
 		if (game_over(&board)) {
 			// if (__builtin_popcountll(board.white_king) > __builtin_popcountll(board.black_king)) {
 			if (__builtin_popcountll(board.pieces[WHITE_KING]) > __builtin_popcountll(board.pieces[BLACK_KING])) {
@@ -67,8 +64,8 @@ void play_self_with_gui(int max_depth) {
 		}
 
 		color = !color;
-		SDL_Delay(750);
-		// SDL_Delay(5000);
+		SDL_Delay(500);
+		// SDL_Delay(750);
 	}
 	quit:
 		gui_quit(&gui);
@@ -137,10 +134,10 @@ int main() {
 	init_knight_moves();
 	init_king_moves();
 
-	const int MAX_DEPTH = 6;
+	const int MAX_DEPTH = 4;
 
-	perf_test(MAX_DEPTH);
-	// play_self_with_gui(MAX_DEPTH);
+	// perf_test(MAX_DEPTH);
+	play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 	return 0;
 }

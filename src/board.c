@@ -417,21 +417,21 @@ void _make_move(
 	uint64_t to_square_mask   = (1ULL << to_square);
 
 	// Get piece at from_square
-	BitBoard pieces = 0;
+	uint8_t piece_idx = 0;
 	for (int idx = 0; idx < 12; ++idx) {
-		pieces |= board->pieces[idx] & from_square_mask;
+		piece_idx += idx * !!(board->pieces[idx] & from_square_mask);
 		board->pieces[idx] &= ~to_square_mask;
 	}
-	uint8_t piece_idx = __builtin_ctzll(pieces);
 	// enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
+	
+	// Remove piece from from_square
+	board->pieces[piece_idx] &= ~from_square_mask;
 	
 	// Check promotion
 	piece_idx += 4 * (piece_idx == WHITE_PAWN && to_square >= 56);
 	piece_idx += 4 * (piece_idx == BLACK_PAWN && to_square <= 7);
 
-	// Remove piece from from_square
 	// Move piece to to_square
-	board->pieces[piece_idx] &= ~from_square_mask;
 	board->pieces[piece_idx] |= to_square_mask;
 
 
@@ -453,8 +453,8 @@ inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 
 	// Remove king from from_square and rook from appropriate square
 	// Guaranteed no pieces captured, so don't remove anything from to squares.
-	enum ColoredPiece king = WHITE_KING + 6 * is_white;
-	enum ColoredPiece rook = WHITE_ROOK + 6 * is_white;
+	enum ColoredPiece king = WHITE_KING + 6 * !is_white;
+	enum ColoredPiece rook = WHITE_ROOK + 6 * !is_white;
 
 	board->pieces[king] &= ~from_square_mask;
 	board->pieces[king] |= to_square_mask;
