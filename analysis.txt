@@ -2,28 +2,31 @@ Flat profile:
 
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
- time   seconds   seconds    calls   s/call   s/call  name    
- 43.75      0.70     0.70 126507371     0.00     0.00  _make_move
- 11.25      0.88     0.18  5115904     0.00     0.00  get_legal_moves
-  9.38      1.03     0.15        1     0.15     1.47  search_legal_moves
-  8.12      1.16     0.13 253014782     0.00     0.00  piece_at
-  8.12      1.29     0.13                             _init
-  7.50      1.41     0.12 126507391     0.00     0.00  calc_mvv_lva_score
-  4.38      1.48     0.07  5115904     0.00     0.00  get_pawn_moves
-  2.50      1.52     0.04 88620687     0.00     0.00  is_occupied_by
-  1.88      1.55     0.03 15345927     0.00     0.00  get_rook_moves_piece
-  1.25      1.57     0.02 15341327     0.00     0.00  get_bishop_moves_piece
-  0.62      1.58     0.01 15347712     0.00     0.00  get_occupied_squares_color
-  0.62      1.59     0.01 10162292     0.00     0.00  get_occupied_squares
-  0.62      1.60     0.01  5115904     0.00     0.00  get_king_moves
-  0.00      1.60     0.00       40     0.00     0.00  translate_square_from_index
-  0.00      1.60     0.00        1     0.00     0.00  init_board
-  0.00      1.60     0.00        1     0.00     0.00  init_king_moves
-  0.00      1.60     0.00        1     0.00     0.00  init_knight_moves
-  0.00      1.60     0.00        1     0.00     0.00  init_pawn_moves
-  0.00      1.60     0.00        1     0.00     1.47  perf_test
-  0.00      1.60     0.00        1     0.00     0.00  populate_board_from_fen
-  0.00      1.60     0.00        1     0.00     0.00  print_legal_moves
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 15.53      0.16     0.16 126015852     0.00     0.00  _make_move
+ 12.62      0.29     0.13        1   130.00   890.00  search_legal_moves
+ 11.65      0.41     0.12 114046606     0.00     0.00  is_occupied_by
+ 11.65      0.53     0.12                             _init
+  9.71      0.63     0.10 126015872     0.00     0.00  decode_move
+  9.71      0.73     0.10 40743959     0.00     0.00  get_pawn_moves_piece
+  7.77      0.81     0.08  5104064     0.00     0.00  get_legal_moves
+  5.83      0.87     0.06 126015872     0.00     0.00  calc_mvv_lva_score
+  3.88      0.91     0.04 72455390     0.00     0.00  is_empty
+  2.91      0.94     0.03 20340688     0.00     0.00  get_occupied_squares
+  2.91      0.97     0.03 15310630     0.00     0.00  get_rook_moves_piece
+  1.94      0.99     0.02        1    20.00    20.00  init_bishop_moves
+  0.97      1.00     0.01 25514262     0.00     0.00  get_occupied_squares_color
+  0.97      1.01     0.01 15306134     0.00     0.00  get_bishop_moves_piece
+  0.97      1.02     0.01 15306134     0.00     0.00  magic_hash
+  0.97      1.03     0.01  5104064     0.00     0.00  get_king_moves
+  0.00      1.03     0.00       40     0.00     0.00  translate_square_from_index
+  0.00      1.03     0.00        1     0.00     0.00  init_board
+  0.00      1.03     0.00        1     0.00     0.00  init_king_moves
+  0.00      1.03     0.00        1     0.00     0.00  init_knight_moves
+  0.00      1.03     0.00        1     0.00     0.00  init_pawn_moves
+  0.00      1.03     0.00        1     0.00   890.00  perf_test
+  0.00      1.03     0.00        1     0.00     0.00  populate_board_from_fen
+  0.00      1.03     0.00        1     0.00     0.00  print_legal_moves
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -61,106 +64,118 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 4 byte(s) for 0.62% of 1.60 seconds
+granularity: each sample hit covers 4 byte(s) for 0.97% of 1.03 seconds
 
 index % time    self  children    called     name
-                0.00    1.47       1/1           main [2]
-[1]     91.9    0.00    1.47       1         perf_test [1]
-                0.15    1.32       1/1           search_legal_moves [3]
-                0.00    0.00       1/1           print_legal_moves [16]
-                0.00    0.00       1/1           init_board [18]
-                0.00    0.00       1/1           populate_board_from_fen [22]
+                                                 <spontaneous>
+[1]     88.3    0.00    0.91                 main [1]
+                0.00    0.89       1/1           perf_test [2]
+                0.02    0.00       1/1           init_bishop_moves [15]
+                0.00    0.00       1/1           init_king_moves [22]
+                0.00    0.00       1/1           init_knight_moves [23]
+                0.00    0.00       1/1           init_pawn_moves [24]
+-----------------------------------------------
+                0.00    0.89       1/1           main [1]
+[2]     86.4    0.00    0.89       1         perf_test [2]
+                0.13    0.76       1/1           search_legal_moves [3]
+                0.00    0.00       1/1           print_legal_moves [19]
+                0.00    0.00       1/1           init_board [21]
+                0.00    0.00       1/1           populate_board_from_fen [25]
+-----------------------------------------------
+                             126015852             search_legal_moves [3]
+                0.13    0.76       1/1           perf_test [2]
+[3]     86.4    0.13    0.76       1+126015852 search_legal_moves [3]
+                0.08    0.52 5104063/5104064     get_legal_moves [4]
+                0.16    0.00 126015852/126015852     _make_move [7]
+                             126015852             search_legal_moves [3]
+-----------------------------------------------
+                0.00    0.00       1/5104064     print_legal_moves [19]
+                0.08    0.52 5104063/5104064     search_legal_moves [3]
+[4]     58.3    0.08    0.52 5104064         get_legal_moves [4]
+                0.10    0.12 40743959/40743959     get_pawn_moves_piece [5]
+                0.06    0.10 126015872/126015872     calc_mvv_lva_score [6]
+                0.03    0.04 15310630/15310630     get_rook_moves_piece [11]
+                0.01    0.04 15306134/15306134     get_bishop_moves_piece [12]
+                0.01    0.01 5104064/5104064     get_king_moves [16]
+                0.00    0.00 5104064/25514262     get_occupied_squares_color [17]
+-----------------------------------------------
+                0.10    0.12 40743959/40743959     get_legal_moves [4]
+[5]     20.9    0.10    0.12 40743959         get_pawn_moves_piece [5]
+                0.08    0.00 71299877/114046606     is_occupied_by [8]
+                0.04    0.00 72455390/72455390     is_empty [13]
+-----------------------------------------------
+                0.06    0.10 126015872/126015872     get_legal_moves [4]
+[6]     15.5    0.06    0.10 126015872         calc_mvv_lva_score [6]
+                0.10    0.00 126015872/126015872     decode_move [10]
+-----------------------------------------------
+                0.16    0.00 126015852/126015852     search_legal_moves [3]
+[7]     15.5    0.16    0.00 126015852         _make_move [7]
+-----------------------------------------------
+                0.04    0.00 42746729/114046606     get_rook_moves_piece [11]
+                0.08    0.00 71299877/114046606     get_pawn_moves_piece [5]
+[8]     11.7    0.12    0.00 114046606         is_occupied_by [8]
 -----------------------------------------------
                                                  <spontaneous>
-[2]     91.9    0.00    1.47                 main [2]
-                0.00    1.47       1/1           perf_test [1]
-                0.00    0.00       1/1           init_king_moves [19]
-                0.00    0.00       1/1           init_knight_moves [20]
-                0.00    0.00       1/1           init_pawn_moves [21]
+[9]     11.7    0.12    0.00                 _init [9]
 -----------------------------------------------
-                             126507371             search_legal_moves [3]
-                0.15    1.32       1/1           perf_test [1]
-[3]     91.9    0.15    1.32       1+126507371 search_legal_moves [3]
-                0.70    0.00 126507371/126507371     _make_move [4]
-                0.18    0.44 5115903/5115904     get_legal_moves [5]
-                             126507371             search_legal_moves [3]
+                0.10    0.00 126015872/126015872     calc_mvv_lva_score [6]
+[10]     9.7    0.10    0.00 126015872         decode_move [10]
 -----------------------------------------------
-                0.70    0.00 126507371/126507371     search_legal_moves [3]
-[4]     43.8    0.70    0.00 126507371         _make_move [4]
+                0.03    0.04 15310630/15310630     get_legal_moves [4]
+[11]     7.3    0.03    0.04 15310630         get_rook_moves_piece [11]
+                0.04    0.00 42746729/114046606     is_occupied_by [8]
 -----------------------------------------------
-                0.00    0.00       1/5115904     print_legal_moves [16]
-                0.18    0.44 5115903/5115904     search_legal_moves [3]
-[5]     38.8    0.18    0.44 5115904         get_legal_moves [5]
-                0.12    0.13 126507391/126507391     calc_mvv_lva_score [6]
-                0.07    0.01 5115904/5115904     get_pawn_moves [9]
-                0.03    0.02 15345927/15345927     get_rook_moves_piece [10]
-                0.02    0.02 15341327/15341327     get_bishop_moves_piece [11]
-                0.01    0.01 5115904/5115904     get_king_moves [13]
-                0.00    0.00 5115904/15347712     get_occupied_squares_color [14]
+                0.01    0.04 15306134/15306134     get_legal_moves [4]
+[12]     4.7    0.01    0.04 15306134         get_bishop_moves_piece [12]
+                0.02    0.00 15306134/20340688     get_occupied_squares [14]
+                0.01    0.00 15306134/15306134     magic_hash [18]
+                0.01    0.00 15306134/25514262     get_occupied_squares_color [17]
 -----------------------------------------------
-                0.12    0.13 126507391/126507391     get_legal_moves [5]
-[6]     15.6    0.12    0.13 126507391         calc_mvv_lva_score [6]
-                0.13    0.00 253014782/253014782     piece_at [7]
+                0.04    0.00 72455390/72455390     get_pawn_moves_piece [5]
+[13]     3.9    0.04    0.00 72455390         is_empty [13]
 -----------------------------------------------
-                0.13    0.00 253014782/253014782     calc_mvv_lva_score [6]
-[7]      8.1    0.13    0.00 253014782         piece_at [7]
+                0.01    0.00 5034554/20340688     get_king_moves [16]
+                0.02    0.00 15306134/20340688     get_bishop_moves_piece [12]
+[14]     2.9    0.03    0.00 20340688         get_occupied_squares [14]
 -----------------------------------------------
-                                                 <spontaneous>
-[8]      8.1    0.13    0.00                 _init [8]
+                0.02    0.00       1/1           main [1]
+[15]     1.9    0.02    0.00       1         init_bishop_moves [15]
 -----------------------------------------------
-                0.07    0.01 5115904/5115904     get_legal_moves [5]
-[9]      4.9    0.07    0.01 5115904         get_pawn_moves [9]
-                0.01    0.00 5115904/10162292     get_occupied_squares [15]
-                0.00    0.00 5115904/15347712     get_occupied_squares_color [14]
+                0.01    0.01 5104064/5104064     get_legal_moves [4]
+[16]     1.9    0.01    0.01 5104064         get_king_moves [16]
+                0.01    0.00 5034554/20340688     get_occupied_squares [14]
+                0.00    0.00 5104064/25514262     get_occupied_squares_color [17]
 -----------------------------------------------
-                0.03    0.02 15345927/15345927     get_legal_moves [5]
-[10]     3.1    0.03    0.02 15345927         get_rook_moves_piece [10]
-                0.02    0.00 42843100/88620687     is_occupied_by [12]
+                0.00    0.00 5104064/25514262     get_legal_moves [4]
+                0.00    0.00 5104064/25514262     get_king_moves [16]
+                0.01    0.00 15306134/25514262     get_bishop_moves_piece [12]
+[17]     1.0    0.01    0.00 25514262         get_occupied_squares_color [17]
 -----------------------------------------------
-                0.02    0.02 15341327/15341327     get_legal_moves [5]
-[11]     2.5    0.02    0.02 15341327         get_bishop_moves_piece [11]
-                0.02    0.00 45777587/88620687     is_occupied_by [12]
+                0.01    0.00 15306134/15306134     get_bishop_moves_piece [12]
+[18]     1.0    0.01    0.00 15306134         magic_hash [18]
 -----------------------------------------------
-                0.02    0.00 42843100/88620687     get_rook_moves_piece [10]
-                0.02    0.00 45777587/88620687     get_bishop_moves_piece [11]
-[12]     2.5    0.04    0.00 88620687         is_occupied_by [12]
+                0.00    0.00       1/1           perf_test [2]
+[19]     0.0    0.00    0.00       1         print_legal_moves [19]
+                0.00    0.00       1/5104064     get_legal_moves [4]
+                0.00    0.00      40/40          translate_square_from_index [20]
 -----------------------------------------------
-                0.01    0.01 5115904/5115904     get_legal_moves [5]
-[13]     1.1    0.01    0.01 5115904         get_king_moves [13]
-                0.00    0.00 5046388/10162292     get_occupied_squares [15]
-                0.00    0.00 5115904/15347712     get_occupied_squares_color [14]
+                0.00    0.00      40/40          print_legal_moves [19]
+[20]     0.0    0.00    0.00      40         translate_square_from_index [20]
 -----------------------------------------------
-                0.00    0.00 5115904/15347712     get_legal_moves [5]
-                0.00    0.00 5115904/15347712     get_pawn_moves [9]
-                0.00    0.00 5115904/15347712     get_king_moves [13]
-[14]     0.6    0.01    0.00 15347712         get_occupied_squares_color [14]
+                0.00    0.00       1/1           perf_test [2]
+[21]     0.0    0.00    0.00       1         init_board [21]
 -----------------------------------------------
-                0.00    0.00 5046388/10162292     get_king_moves [13]
-                0.01    0.00 5115904/10162292     get_pawn_moves [9]
-[15]     0.6    0.01    0.00 10162292         get_occupied_squares [15]
+                0.00    0.00       1/1           main [1]
+[22]     0.0    0.00    0.00       1         init_king_moves [22]
 -----------------------------------------------
-                0.00    0.00       1/1           perf_test [1]
-[16]     0.0    0.00    0.00       1         print_legal_moves [16]
-                0.00    0.00       1/5115904     get_legal_moves [5]
-                0.00    0.00      40/40          translate_square_from_index [17]
+                0.00    0.00       1/1           main [1]
+[23]     0.0    0.00    0.00       1         init_knight_moves [23]
 -----------------------------------------------
-                0.00    0.00      40/40          print_legal_moves [16]
-[17]     0.0    0.00    0.00      40         translate_square_from_index [17]
+                0.00    0.00       1/1           main [1]
+[24]     0.0    0.00    0.00       1         init_pawn_moves [24]
 -----------------------------------------------
-                0.00    0.00       1/1           perf_test [1]
-[18]     0.0    0.00    0.00       1         init_board [18]
------------------------------------------------
-                0.00    0.00       1/1           main [2]
-[19]     0.0    0.00    0.00       1         init_king_moves [19]
------------------------------------------------
-                0.00    0.00       1/1           main [2]
-[20]     0.0    0.00    0.00       1         init_knight_moves [20]
------------------------------------------------
-                0.00    0.00       1/1           main [2]
-[21]     0.0    0.00    0.00       1         init_pawn_moves [21]
------------------------------------------------
-                0.00    0.00       1/1           perf_test [1]
-[22]     0.0    0.00    0.00       1         populate_board_from_fen [22]
+                0.00    0.00       1/1           perf_test [2]
+[25]     0.0    0.00    0.00       1         populate_board_from_fen [25]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -253,10 +268,11 @@ notice and this notice are preserved.
 
 Index by function name
 
-   [8] _init                  [14] get_occupied_squares_color [12] is_occupied_by
-   [4] _make_move              [9] get_pawn_moves          [1] perf_test
-   [6] calc_mvv_lva_score     [10] get_rook_moves_piece    [7] piece_at
-  [11] get_bishop_moves_piece [18] init_board             [22] populate_board_from_fen
-  [13] get_king_moves         [19] init_king_moves        [16] print_legal_moves
-   [5] get_legal_moves        [20] init_knight_moves       [3] search_legal_moves
-  [15] get_occupied_squares   [21] init_pawn_moves        [17] translate_square_from_index
+   [9] _init                  [17] get_occupied_squares_color [13] is_empty
+   [7] _make_move              [5] get_pawn_moves_piece    [8] is_occupied_by
+   [6] calc_mvv_lva_score     [11] get_rook_moves_piece   [18] magic_hash
+  [10] decode_move            [15] init_bishop_moves       [2] perf_test
+  [12] get_bishop_moves_piece [21] init_board             [25] populate_board_from_fen
+  [16] get_king_moves         [22] init_king_moves        [19] print_legal_moves
+   [4] get_legal_moves        [23] init_knight_moves       [3] search_legal_moves
+  [14] get_occupied_squares   [24] init_pawn_moves        [20] translate_square_from_index

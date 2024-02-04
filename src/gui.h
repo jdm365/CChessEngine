@@ -16,5 +16,5 @@ void gui_init(struct GUI* gui);
 void gui_draw(struct GUI* gui);
 void gui_quit(struct GUI* gui);
 
-void gui_draw_board(struct GUI* gui, Board* board, uint8_t tinted_square);
+void gui_draw_board(struct GUI* gui, const Board* board, uint8_t tinted_square);
 bool gui_handle_player_loop(struct GUI* gui, Board* board);

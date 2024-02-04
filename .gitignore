@@ -1,3 +1,9 @@
+# Data
+*.csv
+*.db
+*.sql
+*.parquet
+
 # Prerequisites
 *.d
 

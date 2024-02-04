@@ -12,7 +12,8 @@ extern const float ROOK_VALUE;
 extern const float QUEEN_VALUE;
 extern const float KING_VALUE;
 
-extern const float PIECE_VALUES[6];
+// extern const float PIECE_VALUES[6];
+extern const float PIECE_VALUES[12];
 
 extern const float PAWN_TABLE[64];
 extern const float KNIGHT_TABLE[64];
@@ -44,6 +45,11 @@ float minimax(
 		);
 
 Move get_best_move(const Board* board, enum Color color, int depth);
-Move get_best_move_id(const Board* board, enum Color color, int max_depth);
+Move get_best_move_id(
+		const Board* board, 
+		enum Color color, 
+		int max_depth,
+		uint64_t* nodes_visited
+		);
 float calc_mvv_lva_score(const Board* board, const Move* move);
 BitBoard get_pawn_attacks(BitBoard pawns, enum Color color);

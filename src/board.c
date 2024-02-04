@@ -11,6 +11,7 @@ uint16_t MOVE_NUMBER = 0;
 
 const char* STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
+
 const uint64_t FILE_A = 0x0101010101010101;
 const uint64_t FILE_B = 0x0202020202020202;
 const uint64_t FILE_C = 0x0404040404040404;
@@ -36,7 +37,8 @@ uint64_t KING_MOVES[64];
 
 BitBoard BISHOP_MASKS[64];
 uint64_t BISHOP_MAGICS[64];
-BitBoard BISHOP_MOVES[64][512];
+uint8_t  BISHOP_SHIFT[64];
+BitBoard BISHOP_MOVES[64][4096];
 
 void init_pawn_moves() {
 	for (int square = 0; square < 64; square++) {
@@ -297,7 +299,7 @@ static uint64_t random_uint64() {
 
 }
 
-inline uint64_t magic_hash(uint64_t occupancy, uint64_t magic, int bits) {
+inline uint64_t magic_hash(uint64_t occupancy, uint64_t magic, uint8_t bits) {
 	return (occupancy * magic) >> (64 - bits);
 }
 
@@ -360,12 +362,6 @@ static uint64_t find_magic_number_bishop(int square) {
             return candidate_magic_number;
         }
 		++num_trials;
-
-		// if (num_trials > 10000000) {
-			// printf("Exceeded 10,000,000 trials for square %d\n", square);
-			// printf("Num variants: %d\n", num_variants);
-			// exit(1);
-		// }
     }
 
 	printf("Failed to find a magic number for square %d\n", square);
@@ -391,13 +387,15 @@ void init_bishop_moves() {
 				&num_variants
 				);
 
+		BISHOP_SHIFT[square] = __builtin_popcountll(BISHOP_MASKS[square]);
 		for (int idx = 0; idx < num_variants; ++idx) {
 			BitBoard occupancy = occupancy_variants[idx];
-			int index = magic_hash(
+			uint64_t index = magic_hash(
 					occupancy, 
 					BISHOP_MAGICS[square], 
-					__builtin_popcountll(BISHOP_MASKS[square])
+					BISHOP_SHIFT[square]
 					);
+
 			BISHOP_MOVES[square][index] = generate_bishop_moves(&occupancy, square);
 		}
 	}
@@ -573,6 +571,10 @@ void populate_board_from_fen(Board* board, const char* fen) {
 		}
 		square_cntr++;
 	}
+
+	for (int idx = 0; idx < 64; ++idx) {
+		board->piece_at[idx] = (uint8_t)colored_piece_at(board, idx);
+	}
 }
 
 void print_board(Board* board) {
@@ -669,6 +671,7 @@ void _make_move(
 			(abs(from_square - to_square) == 2)
 				&&
 			((board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) & (1ULL << from_square))
+			// (board->piece_at[from_square] == (uint8_t)WHITE_KING || board->piece_at[from_square] == (uint8_t)BLACK_KING)
 		) {
 		_castle(board, from_square, to_square);
 		return;
@@ -678,29 +681,34 @@ void _make_move(
 	uint64_t to_square_mask   = (1ULL << to_square);
 
 	// Get piece at from_square
-	uint8_t piece_idx = 0;
-	for (int idx = 0; idx < 12; ++idx) {
-		piece_idx += idx * !!(board->pieces[idx] & from_square_mask);
-		board->pieces[idx] &= ~to_square_mask;
-	}
-	// enum ColoredPiece piece = (enum ColoredPiece) piece_idx;
+	uint8_t from_piece = board->piece_at[from_square];
+	uint8_t to_piece   = board->piece_at[to_square];
 	
-	// Remove piece from from_square
-	board->pieces[piece_idx] &= ~from_square_mask;
+	/*
+	if (from_piece == EMPTY_SQUARE) {
+		printf("No piece found at from_square\n");
+		printf("from_square: %d\n", from_square);
+		printf("to_square: %d\n", to_square);
+		print_board(board);
+		exit(1);
+	}
+	*/
+	// Remove piece from from_square and to_square
+	board->pieces[from_piece] &= ~from_square_mask;
 	
 	// Check promotion
-	piece_idx += 4 * (piece_idx == WHITE_PAWN && to_square >= 56);
-	piece_idx += 4 * (piece_idx == BLACK_PAWN && to_square <= 7);
+	from_piece += 4 * (from_piece == WHITE_PAWN && to_square >= 56);
+	from_piece += 4 * (from_piece == BLACK_PAWN && to_square <= 7);
+
+	if (to_piece != EMPTY_SQUARE) {
+		board->pieces[to_piece]   &= ~to_square_mask;
+	}
 
 	// Move piece to to_square
-	board->pieces[piece_idx] |= to_square_mask;
+	board->pieces[from_piece] |= to_square_mask;
 
-
-	// Remove any pieces from to_square
-	// for (int idx = 0; idx < 12; ++idx) {
-		// board->pieces[idx] &= ~to_square_mask;
-	// }
-
+	board->piece_at[from_square] = (uint8_t)EMPTY_SQUARE;
+	board->piece_at[to_square]   = (uint8_t)from_piece;
 }
 
 inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
@@ -722,39 +730,24 @@ inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 
 	board->pieces[rook] &= ~(1ULL << rook_from_square);
 	board->pieces[rook] |= (1ULL << rook_to_square);
-	/*
-	if (is_white) {
-		board->pieces[WHITE_KING] &= ~from_square_mask;
-		board->pieces[WHITE_ROOK] &= ~(1ULL << rook_from_square);
 
-		board->pieces[WHITE_KING] |= to_square_mask;
-		board->pieces[WHITE_ROOK] |= (1ULL << rook_to_square);
-	} 
-	else {
-		board->pieces[BLACK_KING] &= ~from_square_mask;
-		board->pieces[BLACK_ROOK] &= ~(1ULL << rook_from_square);
+	// Update rook position
+	board->piece_at[rook_from_square] = (uint8_t)EMPTY_SQUARE;
+	board->piece_at[rook_to_square]   = (uint8_t)rook;
 
-		board->pieces[BLACK_KING] |= to_square_mask;
-		board->pieces[BLACK_ROOK] |= (1ULL << rook_to_square);
-	}
-	*/
+	// Update king position
+	board->piece_at[from_square] = (uint8_t)EMPTY_SQUARE;
+	board->piece_at[to_square]   = (uint8_t)king;
 }
 
-inline enum Color is_occupied_by(const Board* board, uint8_t square) {
-	BitBoard white_board = board->pieces[WHITE_PAWN];
-	for (int idx = 1; idx < 6; ++idx) {
-		white_board |= board->pieces[idx];
-	}
 
+inline enum Color is_occupied_by(const Board* board, uint8_t square) {
+	BitBoard white_board = get_occupied_squares_color(board, WHITE);
 	if (white_board & (1ULL << square)) {
 		return WHITE;
 	}
 
-	BitBoard black_board = board->pieces[BLACK_PAWN];
-	for (int idx = 1; idx < 6; ++idx) {
-		black_board |= board->pieces[idx + 6];
-	}
-
+	BitBoard black_board = get_occupied_squares_color(board, BLACK);
 	if (black_board & (1ULL << square)) {
 		return BLACK;
 	}
@@ -795,21 +788,11 @@ inline BitBoard get_occupied_squares(const Board* board) {
 }
 
 inline BitBoard get_occupied_squares_color(const Board* board, enum Color color) {
-	if (color == WHITE) {
-		BitBoard occupied_squares = board->pieces[WHITE_PAWN];
-		for (int idx = 1; idx < 6; ++idx) {
-			occupied_squares |= board->pieces[idx];
-		}
-		return occupied_squares;
-	} else if (color == BLACK) {
-		BitBoard occupied_squares = board->pieces[BLACK_PAWN];
-		for (int idx = 7; idx < 12; ++idx) {
-			occupied_squares |= board->pieces[idx];
-		}
-		return occupied_squares;
-	}
-
-	printf("Error: get_occupied_squares_color. Color must be WHITE or BLACK.\n");
-	exit(1);
-	return 0;
+	uint8_t shift = 6 * (color == BLACK);
+	return board->pieces[WHITE_PAWN + shift] |
+		   board->pieces[WHITE_KNIGHT + shift] |
+		   board->pieces[WHITE_BISHOP + shift] |
+		   board->pieces[WHITE_ROOK + shift] |
+		   board->pieces[WHITE_QUEEN + shift] |
+		   board->pieces[WHITE_KING + shift];
 }

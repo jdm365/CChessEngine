@@ -5,6 +5,7 @@ CXX = clang
 ## CXX = gcc
 CXXFLAGS = -Wall -g -O3 -ffast-math
 CXXFLAGS += -mpopcnt -march=native -mtune=native
+CXXFLAGS += -lm
 CXXFLAGS += -Wno-format
 OS = $(shell uname -s)
 ifeq ($(OS), Darwin)

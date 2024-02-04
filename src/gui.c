@@ -115,7 +115,7 @@ void gui_init(struct GUI* gui) {
 	}
 }
 
-void gui_draw_board(struct GUI* gui, Board* board, uint8_t tinted_square) {
+void gui_draw_board(struct GUI* gui, const Board* board, uint8_t tinted_square) {
 	SDL_SetRenderDrawColor(gui->renderer, 0, 0, 0, 255);
 	SDL_RenderClear(gui->renderer);
 
@@ -151,7 +151,8 @@ void gui_draw_board(struct GUI* gui, Board* board, uint8_t tinted_square) {
 						);
 			}
 			SDL_RenderFillRect(gui->renderer, &rect);
-			enum ColoredPiece piece = colored_piece_at(board, (7 - i) * 8 + j);
+			// enum ColoredPiece piece = colored_piece_at(board, (7 - i) * 8 + j);
+			uint8_t piece = board->piece_at[(7 - i) * 8 + j];
 			if (piece != EMPTY_SQUARE) {
 				SDL_RenderCopy(
 						gui->renderer, 

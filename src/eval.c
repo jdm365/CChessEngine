@@ -12,12 +12,19 @@ const float ROOK_VALUE   = 5.0f;
 const float QUEEN_VALUE  = 9.0f;
 const float KING_VALUE   = 1000.0f;
 
-const float PIECE_VALUES[6] = {
+// Do array of 12 for convernience. Potentially fix in the future.
+const float PIECE_VALUES[12] = {
+	PAWN_VALUE,
 	PAWN_VALUE,
 	KNIGHT_VALUE,
+	KNIGHT_VALUE,
+	BISHOP_VALUE,
 	BISHOP_VALUE,
 	ROOK_VALUE,
+	ROOK_VALUE,
 	QUEEN_VALUE,
+	QUEEN_VALUE,
+	KING_VALUE,
 	KING_VALUE
 };
 
@@ -518,14 +525,25 @@ Move get_best_move(const Board* board, enum Color color, int depth) {
 */
 
 
-Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
+Move get_best_move_id(
+		const Board* board, 
+		enum Color color, 
+		int max_depth,
+		uint64_t* nodes_visited
+		) {
     MoveList moves;
     init_move_list(&moves);
     get_legal_moves(board, &moves, color);
 
     Move  best_move = moves.moves[0];
     float best_score;
-    uint64_t nodes_visited = 0;
+    *nodes_visited = 0;
+
+	if ((color == WHITE) && (MOVE_NUMBER % 10 == 9)) {
+		for (int idx = 0; idx < 4096; ++idx) {
+			HISTORY_TABLE[idx / 64][idx % 64] *= 0.5f;
+		}
+	}
 
     clock_t start = clock();
 
@@ -533,7 +551,7 @@ Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
         best_score = -INF;
 
         for (int idx = 0; idx < moves.count; ++idx) {
-            ++nodes_visited;
+            ++*nodes_visited;
 
             Move move = moves.moves[idx];
             Board new_board = *board;
@@ -548,7 +566,7 @@ Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
                 depth, 
                 -INF, 
                 INF,
-                &nodes_visited
+                nodes_visited
             );
 
             if (score > best_score) {
@@ -561,8 +579,8 @@ Move get_best_move_id(const Board* board, enum Color color, int max_depth) {
         // if (time_elapsed(start) > time_limit) break;
     }
 
-    printf("KNodes visited: %llu\n", nodes_visited / 1000);
-    printf("MNps: %f\n", (float)nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
+    printf("KNodes visited: %lu\n", *nodes_visited / 1000);
+    printf("MNps: %f\n", (float)*nodes_visited / ((float)(clock() - start) / CLOCKS_PER_SEC) / 1000000.0f);
 
     return best_move;
 }
@@ -571,11 +589,11 @@ inline float calc_mvv_lva_score(const Board* board, const Move* move) {
 	uint8_t from, to;
 	decode_move(move, &from, &to);
 
-	enum Piece attacker = piece_at(board, from);
-	enum Piece victim   = piece_at(board, to);
+	uint8_t attacker = board->piece_at[from];
+	uint8_t victim   = board->piece_at[to];
 
-	float score = HISTORY_TABLE[from][to];
-	if (victim == EMPTY_PIECE) return score;
-	score += 10.0f * (PIECE_VALUES[victim] - PIECE_VALUES[attacker]);
-	return score;
+	if (victim == EMPTY_SQUARE) return HISTORY_TABLE[from][to];
+	// Offset by QUEEN_VALUE to make sure that the score 
+	// is always positive (excluding king sacrifices, lol)
+	return HISTORY_TABLE[from][to] + (QUEEN_VALUE + PIECE_VALUES[victim] - PIECE_VALUES[attacker]);
 }

@@ -8,6 +8,7 @@
 #include "movegen.h"
 #include "eval.h"
 #include "gui.h"
+#include "depth_test.h"
 
 
 
@@ -32,7 +33,8 @@ void play_self_with_gui(int max_depth) {
 
 		gui_draw_board(&gui, &board, 64);
 
-		Move best_move = get_best_move_id(&board, color, max_depth);
+		uint64_t nodes_searched;
+		Move best_move = get_best_move_id(&board, color, max_depth, &nodes_searched);
 		uint8_t from, to;
 		decode_move(&best_move, &from, &to);
 
@@ -69,7 +71,6 @@ void play_self_with_gui(int max_depth) {
 
 		color = !color;
 		SDL_Delay(500);
-		// SDL_Delay(750);
 	}
 	quit:
 		gui_quit(&gui);
@@ -98,10 +99,10 @@ void play_against_engine(int max_depth) {
 		}
 
 		gui_draw_board(&gui, &board, 64);
-		SDL_Delay(750);
+		SDL_Delay(500);
 
-		// Move best_move = get_best_move(&board, BLACK, max_depth);
-		Move best_move = get_best_move_id(&board, BLACK, max_depth);
+		uint64_t nodes_searched;
+		Move best_move = get_best_move_id(&board, BLACK, max_depth, &nodes_searched);
 		uint8_t from, to;
 		decode_move(&best_move, &from, &to);
 
@@ -142,9 +143,10 @@ int main() {
 	init_king_moves();
 	init_bishop_moves();
 
-	const int MAX_DEPTH = 4;
+	const int MAX_DEPTH = 7;
 
-	perf_test(MAX_DEPTH);
+	get_average_num_nodes(MAX_DEPTH);
+	// perf_test(MAX_DEPTH);
 	// play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 	return 0;

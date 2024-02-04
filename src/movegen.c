@@ -9,9 +9,9 @@
 #include "movegen.h"
 #include "eval.h"
 
-static inline uint8_t min(const uint8_t a, const uint8_t b) {
-	return a < b ? a : b;
-}
+// static inline uint8_t min(const uint8_t a, const uint8_t b) {
+	// return a < b ? a : b;
+// }
 
 inline void create_move(Move* move, uint8_t from, uint8_t to) {
 	*move = (from & SQUARE_IDX_MASK) | (to << DST_SQUARE_SHIFT);
@@ -213,6 +213,7 @@ void get_knight_moves(
 	}
 }
 
+/*
 void get_bishop_moves_piece(
 		const Board* board,
 		MoveList* list,
@@ -337,6 +338,35 @@ void get_bishop_moves_piece(
 				break;
 			}
 		}
+	}
+}
+*/
+
+void get_bishop_moves_piece(
+		const Board* board,
+		MoveList* list,
+		uint8_t square,
+		enum Color color
+		) {
+	BitBoard self_mask = get_occupied_squares_color(board, color);
+	BitBoard occupied = get_occupied_squares(board);
+
+	BitBoard occupancy = occupied & BISHOP_MASKS[square];
+
+	uint64_t magic_hash_key = magic_hash(
+			occupancy,
+			BISHOP_MAGICS[square],
+			BISHOP_SHIFT[square]
+			);
+	BitBoard moves = BISHOP_MOVES[square][magic_hash_key];
+	moves &= ~self_mask;
+
+	while (moves) {
+		uint8_t to = __builtin_ctzll(moves);
+		Move move;
+		create_move(&move, square, to);
+		add_move(list, move);
+		moves &= moves - 1;
 	}
 }
 
@@ -575,54 +605,80 @@ void get_king_moves(
 }
 
 /*
-static inline void swap(Move* a, Move* b) {
-	Move tmp = *a;
-	*a = *b;
-	*b = tmp;
+static inline void swap(MoveList* list, int a, int b) {
+	// Swap move and move_scores
+	Move temp_move   = list->moves[a];
+	float temp_score = list->move_scores[a];
+
+	list->moves[a] = list->moves[b];
+	list->move_scores[a] = list->move_scores[b];
+
+	list->moves[b] = temp_move;
+	list->move_scores[b] = temp_score;
 }
 
-static inline int partition(Move* moves, int low, int high) {
-	int pivot = moves[high].mvv_lva_score;
+static inline int median_of_three(MoveList* list, int low, int high) {
+    int mid = low + (high - low) / 2;
+    if (list->move_scores[low] > list->move_scores[mid])
+        swap(list, low, mid);
+    if (list->move_scores[low] > list->move_scores[high])
+        swap(list, low, high);
+    if (list->move_scores[mid] > list->move_scores[high])
+        swap(list, mid, high);
+    return mid;
+}
+
+static inline int partition(MoveList* list, int low, int high) {
+	// int pivot = list->move_scores[high];
+	int pivot_index = median_of_three(list, low, high);
+	float pivot = list->move_scores[pivot_index];
 	int i = low - 1;
 
 	for (int j = low; j <= high - 1; ++j) {
-		if (moves[j].mvv_lva_score >= pivot) {
+		if (list->move_scores[j] >= pivot) {
 			++i;
-			swap(&moves[i], &moves[j]);
+			swap(list, i, j);
 		}
 	}
 
-	swap(&moves[i + 1], &moves[high]);
+	swap(list, i + 1, high);
 	return i + 1;
 }
 
-static inline void quicksort(Move* moves, int low, int high) {
-	if (low < high) {
-		int pi = partition(moves, low, high);
+static inline void quicksort(MoveList* list, int low, int high) {
+    while (low < high) {
+        int pi = partition(list, low, high);
 
-		quicksort(moves, low, pi - 1);
-		quicksort(moves, pi + 1, high);
-	}
+        // Optimize for tail recursion
+        if (pi - low < high - pi) {
+            quicksort(list, low, pi - 1);
+            low = pi + 1;
+        } else {
+            quicksort(list, pi + 1, high);
+            high = pi - 1;
+        }
+    }
 }
 */
 
-static inline void insertion_sort(MoveList* list) {
-	uint16_t count = list->count;
+static inline void insertion_sort(MoveList* list, int n) {
+	Move key;
+	float key_score;
+	int j;
+	for (int i = 1; i < n; ++i) {
+		key = list->moves[i];
+		key_score = list->move_scores[i];
+		j = i - 1;
 
-    for (int i = 1; i < count; ++i) {
-        float key_score = list->move_scores[i];
-		Move key = list->moves[i];
-
-        int j = i - 1;
-
-        while (j >= 0 && list->move_scores[j] < key_score) {
-			list->move_scores[j + 1] = list->move_scores[j];
+		while (j >= 0 && list->move_scores[j] < key_score) {
 			list->moves[j + 1] = list->moves[j];
+			list->move_scores[j + 1] = list->move_scores[j];
 			--j;
-        }
-		list->move_scores[j + 1] = key_score;
+		}
+
 		list->moves[j + 1] = key;
-    }
+		list->move_scores[j + 1] = key_score;
+	}
 }
 
 
@@ -640,12 +696,12 @@ void get_legal_moves(
 
 	// Calc mvv lva
 	for (int idx = 0; idx < list->count; ++idx) {
-		calc_mvv_lva_score(board, &list->moves[idx]);
+		list->move_scores[idx] = calc_mvv_lva_score(board, &list->moves[idx]);
 	}
 
 	// Sort moves
-	// quicksort(list->moves, 0, list->count - 1);
-	insertion_sort(list);
+	// quicksort(list, 0, list->count - 1);
+	insertion_sort(list, list->count);
 }
 
 static void search_legal_moves(
@@ -693,7 +749,7 @@ void perf_test(int max_depth) {
 	printf("==                   MOVEGEN PERF                  ==\n");
 	printf("=====================================================\n");
 	printf("Time spent:    %f\n", time_spent);
-	printf("Nodes visited: %llu\n", nodes_visited);
+	printf("Nodes visited: %lu\n", nodes_visited);
 	printf("MN/s:          %f\n", nodes_visited / time_spent / 1000000);
 	printf("=====================================================\n");
 }
