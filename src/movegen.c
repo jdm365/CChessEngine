@@ -722,7 +722,7 @@ static inline void quicksort(MoveList* list, int low, int high) {
 }
 */
 
-static inline void insertion_sort(MoveList* list, int n) {
+inline void insertion_sort(MoveList* list, int n) {
 	Move key;
 	float key_score;
 	int j;

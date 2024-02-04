@@ -146,7 +146,7 @@ int main() {
 	init_bishop_moves();
 	init_rook_moves();
 
-	const int MAX_DEPTH = 6;
+	const int MAX_DEPTH = 4;
 
 	// get_average_num_nodes(MAX_DEPTH);
 	// perf_test(MAX_DEPTH);

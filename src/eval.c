@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "board.h"
@@ -480,7 +482,13 @@ float minimax(
 			alpha = score;
 		}
 		if (alpha >= beta) {
-			HISTORY_TABLE[from][to] += 0.000001f * ((float)depth * (float)depth);
+			float inc = 0.000001f * ((float)depth * (float)depth);
+			HISTORY_TABLE[from][to] += inc;
+
+			if (HISTORY_TABLE[from][to] > 10.0f) {
+				printf("HISTORY_TABLE overflow\n");
+				exit(1);
+			}
 			break;
 		}
 	}
@@ -560,8 +568,12 @@ Move get_best_move_id(
             Move move = moves.moves[idx];
             Board new_board = *board;
 
+
 			uint8_t from, to;
 			decode_move(move, &from, &to);
+
+			float last_history = HISTORY_TABLE[from][to];
+
             _make_move(&new_board, from, to);
             float score = -minimax(
                 &new_board, 
@@ -577,7 +589,10 @@ Move get_best_move_id(
                 best_score = score;
                 best_move = move;
             }
+			moves.move_scores[idx] += HISTORY_TABLE[from][to] - last_history;
         }
+		// Reorder moves based on scores
+		insertion_sort(&moves, moves.count);
 
         // Optional: Check time or other stopping criteria to break early
         // if (time_elapsed(start) > time_limit) break;

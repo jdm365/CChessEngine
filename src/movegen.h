@@ -34,6 +34,8 @@ bool is_move_legal(MoveList* legal_moves, Move move);
 bool game_over(const Board* board);
 void perf_test(int max_depth);
 
+void insertion_sort(MoveList* list, int n);
+
 /****************************************************************
 
 // Move generation functions

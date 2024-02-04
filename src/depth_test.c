@@ -535,8 +535,7 @@ void get_average_num_nodes(int depth) {
 		average_total += move_list.count / 500.0f;
 
 		nodes_visited = 0;
-		get_best_move(&board, WHITE, depth, &nodes_visited);
-		// get_best_move_id(&board, WHITE, depth, &nodes_visited);
+		get_best_move_id(&board, WHITE, depth, &nodes_visited);
 		average += ((float)nodes_visited  * 0.001 / 500.0f);
 
 		for (int i = 0; i < 64; ++i) {
