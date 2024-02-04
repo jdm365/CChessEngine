@@ -5,13 +5,6 @@
 #include "board.h"
 
 
-/*
-typedef struct {
-	uint8_t from;
-	uint8_t to;
-	float mvv_lva_score;
-} Move;
-*/
 typedef uint16_t Move;
 
 #define SQUARE_IDX_MASK 0x3F
@@ -29,7 +22,7 @@ typedef struct {
 } MoveList;
 
 void create_move(Move* move, uint8_t from, uint8_t to);
-void decode_move(const Move* move, uint8_t* from, uint8_t* to);
+void decode_move(Move move, uint8_t* from, uint8_t* to);
 void init_move_list(MoveList* list);
 void reset_move_list(MoveList* list);
 // void add_move(MoveList* list, uint8_t from, uint8_t to);

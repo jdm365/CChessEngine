@@ -42,8 +42,14 @@ extern uint64_t BISHOP_MAGICS[64];
 extern uint8_t  BISHOP_SHIFT[64];
 extern BitBoard BISHOP_MOVES[64][4096];
 
+extern BitBoard ROOK_MASKS[64];
+extern uint64_t ROOK_MAGICS[64];
+extern uint8_t  ROOK_SHIFT[64];
+extern BitBoard ROOK_MOVES[64][4096];
+
 uint64_t magic_hash(uint64_t occupancy, uint64_t magic, uint8_t bits);
 void init_bishop_moves();
+void init_rook_moves();
 
 enum Piece {
 	PAWN,

@@ -36,7 +36,7 @@ void play_self_with_gui(int max_depth) {
 		uint64_t nodes_searched;
 		Move best_move = get_best_move_id(&board, color, max_depth, &nodes_searched);
 		uint8_t from, to;
-		decode_move(&best_move, &from, &to);
+		decode_move(best_move, &from, &to);
 
 		_make_move(&board, from, to);
 		reset_move_list(&moves);
@@ -103,8 +103,9 @@ void play_against_engine(int max_depth) {
 
 		uint64_t nodes_searched;
 		Move best_move = get_best_move_id(&board, BLACK, max_depth, &nodes_searched);
+		// Move best_move = get_best_move(&board, BLACK, max_depth, &nodes_searched);
 		uint8_t from, to;
-		decode_move(&best_move, &from, &to);
+		decode_move(best_move, &from, &to);
 
 		_make_move(&board, from, to);
 		printf("\nMove: %s", translate_square_from_index(from));
@@ -141,13 +142,15 @@ int main() {
 	init_pawn_moves();
 	init_knight_moves();
 	init_king_moves();
+
 	init_bishop_moves();
+	init_rook_moves();
 
-	const int MAX_DEPTH = 7;
+	const int MAX_DEPTH = 6;
 
-	get_average_num_nodes(MAX_DEPTH);
+	// get_average_num_nodes(MAX_DEPTH);
 	// perf_test(MAX_DEPTH);
 	// play_self_with_gui(MAX_DEPTH);
-	// play_against_engine(MAX_DEPTH);
+	play_against_engine(MAX_DEPTH);
 	return 0;
 }

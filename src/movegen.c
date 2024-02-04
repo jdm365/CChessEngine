@@ -17,9 +17,9 @@ inline void create_move(Move* move, uint8_t from, uint8_t to) {
 	*move = (from & SQUARE_IDX_MASK) | (to << DST_SQUARE_SHIFT);
 }
 
-inline void decode_move(const Move* move, uint8_t* from, uint8_t* to) {
-	*from = *move & SQUARE_IDX_MASK;
-	*to   = (*move >> DST_SQUARE_SHIFT) & SQUARE_IDX_MASK;
+inline void decode_move(Move move, uint8_t* from, uint8_t* to) {
+	*from = move & SQUARE_IDX_MASK;
+	*to   = (move >> DST_SQUARE_SHIFT) & SQUARE_IDX_MASK;
 }
 
 void init_move_list(MoveList* list) {
@@ -56,7 +56,7 @@ Move get_move_from_string(const char* move) {
 
 const char* get_string_from_move(Move move) {
 	uint8_t from, to;
-	decode_move(&move, &from, &to);
+	decode_move(move, &from, &to);
 
 	static char str[5];
 	str[0] = translate_square_from_index(from)[0];
@@ -113,12 +113,14 @@ void get_pawn_moves_piece(
 	Move move = 0;
 	if (is_empty(board, one_forward)) {
 		create_move(&move, square, one_forward);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, one_forward);
 		add_move(list, move);
 
 		if (is_starting_rank) {
 			uint8_t two_forward = square + (color == WHITE ? 16 : -16);
 			if (is_empty(board, two_forward)) {
 				create_move(&move, square, two_forward);
+				list->move_scores[list->count] = _calc_mvv_lva_score(board, square, one_forward);
 				add_move(list, move);
 			}
 		}
@@ -133,6 +135,7 @@ void get_pawn_moves_piece(
 			uint8_t capture_left = square + 7;
 			if (is_occupied_by(board, capture_left) == BLACK) {
 				create_move(&move, square, capture_left);
+				list->move_scores[list->count] = _calc_mvv_lva_score(board, square, one_forward);
 				add_move(list, move);
 			}
 		}
@@ -141,6 +144,7 @@ void get_pawn_moves_piece(
 			uint8_t capture_right = square + 9;
 			if (is_occupied_by(board, capture_right) == BLACK) {
 				create_move(&move, square, capture_right);
+				list->move_scores[list->count] = _calc_mvv_lva_score(board, square, one_forward);
 				add_move(list, move);
 			}
 		}
@@ -150,6 +154,7 @@ void get_pawn_moves_piece(
 			uint8_t capture_left = square - 9;
 			if (is_occupied_by(board, capture_left) == WHITE) {
 				create_move(&move, square, capture_left);
+				list->move_scores[list->count] = _calc_mvv_lva_score(board, square, one_forward);
 				add_move(list, move);
 			}
 		}
@@ -158,6 +163,7 @@ void get_pawn_moves_piece(
 			uint8_t capture_right = square - 7;
 			if (is_occupied_by(board, capture_right) == WHITE) {
 				create_move(&move, square, capture_right);
+				list->move_scores[list->count] = _calc_mvv_lva_score(board, square, one_forward);
 				add_move(list, move);
 			}
 		}
@@ -177,6 +183,25 @@ void get_pawn_moves(
 		get_pawn_moves_piece(board, list, square, color);
 		pawns &= pawns - 1;
 	}
+
+	/*
+	BitBoard empty = ~get_occupied_squares(board);
+
+	BitBoard one_forward = color == WHITE ? (pawns << 8) : (pawns >> 8);
+	BitBoard two_forward = color == WHITE ? (one_forward & empty) << 8 : (one_forward & empty) >> 8;
+
+	BitBoard capture_left = color == WHITE ? (pawns << 7) & ~FILE_H : (pawns >> 9) & ~FILE_A;
+	BitBoard capture_right = color == WHITE ? (pawns << 9) & ~FILE_A : (pawns >> 7) & ~FILE_H;
+
+	BitBoard moves = one_forward | two_forward | capture_left | capture_right;
+
+	Move move = 0;
+	while (moves) {
+		uint8_t to = __builtin_ctzll(moves);
+		create_move(&move, to - 8, to);
+		moves &= moves - 1;
+	}
+	*/
 }
 
 inline void get_knight_moves_piece(
@@ -193,6 +218,7 @@ inline void get_knight_moves_piece(
 	while (moves) {
 		uint8_t to = __builtin_ctzll(moves);
 		create_move(&move, square, to);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, to);
 		add_move(list, move);
 		moves &= moves - 1;
 	}
@@ -365,6 +391,7 @@ void get_bishop_moves_piece(
 		uint8_t to = __builtin_ctzll(moves);
 		Move move;
 		create_move(&move, square, to);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, to);
 		add_move(list, move);
 		moves &= moves - 1;
 	}
@@ -385,6 +412,7 @@ void get_bishop_moves(
 }
 
 
+/*
 void get_rook_moves_piece(
 		const Board* board, 
 		MoveList* list, 
@@ -502,6 +530,36 @@ void get_rook_moves_piece(
 		}
 	}
 }
+*/
+
+void get_rook_moves_piece(
+		const Board* board,
+		MoveList* list,
+		uint8_t square,
+		enum Color color
+		) {
+	BitBoard self_mask = get_occupied_squares_color(board, color);
+	BitBoard occupied  = get_occupied_squares(board);
+
+	BitBoard occupancy = occupied & ROOK_MASKS[square];
+
+	uint64_t magic_hash_key = magic_hash(
+			occupancy,
+			ROOK_MAGICS[square],
+			ROOK_SHIFT[square]
+			);
+	BitBoard moves = ROOK_MOVES[square][magic_hash_key];
+	moves &= ~self_mask;
+
+	while (moves) {
+		uint8_t to = __builtin_ctzll(moves);
+		Move move;
+		create_move(&move, square, to);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, to);
+		add_move(list, move);
+		moves &= moves - 1;
+	}
+}
 
 void get_rook_moves(
 		const Board* board, 
@@ -561,6 +619,7 @@ void get_king_moves(
 	while (moves) {
 		uint8_t to = __builtin_ctzll(moves);
 		create_move(&move, square, to);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, to);
 		add_move(list, move);
 		moves &= moves - 1;
 	}
@@ -587,6 +646,7 @@ void get_king_moves(
 			!(occupied & (1ULL << (starting_square_king + 2)))
 	   ) {
 		create_move(&move, square, square + 2);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, square + 2);
 		add_move(list, move);
 	}
 
@@ -600,6 +660,7 @@ void get_king_moves(
 			!(occupied & (1ULL << (starting_square_king - 3)))
 	   ) {
 		create_move(&move, square, square - 2);
+		list->move_scores[list->count] = _calc_mvv_lva_score(board, square, square - 2);
 		add_move(list, move);
 	}
 }
@@ -681,7 +742,6 @@ static inline void insertion_sort(MoveList* list, int n) {
 	}
 }
 
-
 void get_legal_moves(
 		const Board* board,
 		MoveList* list,
@@ -694,13 +754,7 @@ void get_legal_moves(
 	get_queen_moves(board, list, color);
 	get_king_moves(board, list, color);
 
-	// Calc mvv lva
-	for (int idx = 0; idx < list->count; ++idx) {
-		list->move_scores[idx] = calc_mvv_lva_score(board, &list->moves[idx]);
-	}
-
 	// Sort moves
-	// quicksort(list, 0, list->count - 1);
 	insertion_sort(list, list->count);
 }
 
@@ -721,7 +775,7 @@ static void search_legal_moves(
 
 		Move move = list.moves[idx];
 		uint8_t from, to;
-		decode_move(&move, &from, &to);
+		decode_move(move, &from, &to);
 
 		Board new_board = *board;
 		_make_move(&new_board, from, to);

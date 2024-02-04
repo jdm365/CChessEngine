@@ -40,6 +40,11 @@ uint64_t BISHOP_MAGICS[64];
 uint8_t  BISHOP_SHIFT[64];
 BitBoard BISHOP_MOVES[64][4096];
 
+BitBoard ROOK_MASKS[64];
+uint64_t ROOK_MAGICS[64];
+uint8_t  ROOK_SHIFT[64];
+BitBoard ROOK_MOVES[64][4096];
+
 void init_pawn_moves() {
 	for (int square = 0; square < 64; square++) {
 		uint64_t white_moves = 0;
@@ -259,6 +264,104 @@ static BitBoard generate_bishop_moves(BitBoard* occupancy, int square) {
 	return moves;
 }
 
+
+static void init_rook_masks() {
+	for (int square_idx = 0; square_idx < 64; ++square_idx) {
+		ROOK_MASKS[square_idx] = 0;
+
+		int rank = square_idx / 8;
+		int file = square_idx % 8;
+		int start_rank = rank;
+		int start_file = file;
+
+		while (rank < 6) {
+			++rank;
+			ROOK_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (file < 6) {
+			++file;
+			ROOK_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (file > 1) {
+			--file;
+			ROOK_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+
+		rank = start_rank;
+		file = start_file;
+
+		while (rank > 1) {
+			--rank;
+			ROOK_MASKS[square_idx] |= (1ULL << (8 * rank + file));
+		}
+	}
+}
+
+static BitBoard generate_rook_moves(BitBoard* occupancy, int square) {
+	BitBoard moves = 0;
+
+	int rank = square / 8;
+	int file = square % 8;
+	int start_rank = rank;
+	int start_file = file;
+
+	while (rank < 7) {
+		++rank;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	rank = start_rank;
+	file = start_file;
+
+	while (file < 7) {
+		++file;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	rank = start_rank;
+	file = start_file;
+
+	while (file > 0) {
+		--file;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	rank = start_rank;
+	file = start_file;
+
+	while (rank > 0) {
+		--rank;
+		if (*occupancy & (1ULL << (8 * rank + file))) {
+			moves |= (1ULL << (8 * rank + file));
+			break;
+		}
+		moves |= (1ULL << (8 * rank + file));
+	}
+
+	return moves;
+}
+
+
 static void generate_occupancy_variants(
 		BitBoard mask, 
 		BitBoard* variants, 
@@ -290,7 +393,6 @@ static void generate_occupancy_variants(
 }
 
 static uint64_t xorshift64_state = 88172645463325252ULL;
-
 static uint64_t random_uint64() {
 	xorshift64_state ^= xorshift64_state >> 12;
     xorshift64_state ^= xorshift64_state << 25;
@@ -307,7 +409,8 @@ static bool validate_magic_number(
 		int square, 
 		uint64_t magic, 
 		BitBoard* variants, 
-		int num_variants
+		int num_variants,
+		enum Piece piece_type
 		) {
 	/************************************************************
 	For a bishop on the given square, generate all possible relevant occupancies.
@@ -319,20 +422,33 @@ static bool validate_magic_number(
 
 	uint64_t attack_table[4096] = {0};
 
+	uint64_t mask;
+	BitBoard (*generate_moves)(BitBoard*, int) = NULL;
+	if (piece_type == BISHOP) {
+		mask = BISHOP_MASKS[square];
+		generate_moves = generate_bishop_moves;
+	} else {
+		mask = ROOK_MASKS[square];
+		generate_moves = generate_rook_moves;
+	}
+
 	for (int idx = 0; idx < num_variants; ++idx) {
 		BitBoard occupancy = variants[idx];
 
 		uint64_t index = magic_hash(
 				occupancy, 
 				magic, 
-				__builtin_popcountll(BISHOP_MASKS[square])
+				// __builtin_popcountll(BISHOP_MASKS[square])
+				__builtin_popcountll(mask)
 				);
 
 		if (attack_table[index] == 0) {
 			// First time we've seen this index. Store the attack table
-			attack_table[index] = generate_bishop_moves(&occupancy, square);
+			// attack_table[index] = generate_bishop_moves(&occupancy, square);
+			attack_table[index] = generate_moves(&occupancy, square);
 		} 
-		else if (attack_table[index] != generate_bishop_moves(&occupancy, square)) {
+		// else if (attack_table[index] != generate_bishop_moves(&occupancy, square)) {
+		else if (attack_table[index] != generate_moves(&occupancy, square)) {
 			// This magic number produces more than one variant with the same index.
 			// It's not a valid magic number.
 			return false;
@@ -345,12 +461,19 @@ static bool validate_magic_number(
 	return true;
 }
 
-static uint64_t find_magic_number_bishop(int square) {
-	// 4096 is the maximum possible occupancy variants for a bishop
+static uint64_t find_magic_number(int square, enum Piece piece_type) {
 	BitBoard variants[4096];
 	int num_variants;
+
+	uint64_t mask;
+	if (piece_type == BISHOP) {
+		mask = BISHOP_MASKS[square];
+	} else {
+		mask = ROOK_MASKS[square];
+	}
 	generate_occupancy_variants(
-			BISHOP_MASKS[square],
+			// BISHOP_MASKS[square],
+			mask,
 			variants,
 			&num_variants
 			);
@@ -358,7 +481,7 @@ static uint64_t find_magic_number_bishop(int square) {
 	int num_trials = 0;
     while (true) {
         uint64_t candidate_magic_number = random_uint64() & random_uint64() & random_uint64();
-        if (validate_magic_number(square, candidate_magic_number, variants, num_variants)) {
+        if (validate_magic_number(square, candidate_magic_number, variants, num_variants, piece_type)) {
             return candidate_magic_number;
         }
 		++num_trials;
@@ -370,7 +493,13 @@ static uint64_t find_magic_number_bishop(int square) {
 
 static void init_bishop_magics() {
 	for (int square = 0; square < 64; ++square) {
-		BISHOP_MAGICS[square] = find_magic_number_bishop(square);
+		BISHOP_MAGICS[square] = find_magic_number(square, BISHOP);
+	}
+}
+
+static void init_rook_magics() {
+	for (int square = 0; square < 64; ++square) {
+		ROOK_MAGICS[square] = find_magic_number(square, ROOK);
 	}
 }
 
@@ -403,6 +532,34 @@ void init_bishop_moves() {
 	// BISHOP_MOVES[square][magic_hash(occupancy, BISHOP_MAGICS[square], __builtin_popcountll(BISHOP_MASKS[square]))]
 }
 
+void init_rook_moves() {
+	init_rook_masks();
+	init_rook_magics();
+
+	for (int square = 0; square < 64; ++square) {
+		BitBoard occupancy_variants[4096];
+		int num_variants;
+		generate_occupancy_variants(
+				ROOK_MASKS[square], 
+				occupancy_variants, 
+				&num_variants
+				);
+
+		ROOK_SHIFT[square] = __builtin_popcountll(ROOK_MASKS[square]);
+		for (int idx = 0; idx < num_variants; ++idx) {
+			BitBoard occupancy = occupancy_variants[idx];
+			uint64_t index = magic_hash(
+					occupancy, 
+					ROOK_MAGICS[square],
+					ROOK_SHIFT[square]
+					);
+
+			ROOK_MOVES[square][index] = generate_rook_moves(&occupancy, square);
+		}
+	}
+	// Now to get move at runtime, we can do:
+	// ROOK_MOVES[square][magic_hash(occupancy, ROOK_MAGICS[square], __builtin_popcountll(ROOK_MASKS[square]))]
+}
 
 void init_board(Board* board) {
 	memset(board->pieces, 0, sizeof(board->pieces));

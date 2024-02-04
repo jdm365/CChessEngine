@@ -44,7 +44,12 @@ float minimax(
 		uint64_t* nodes_visited
 		);
 
-Move get_best_move(const Board* board, enum Color color, int depth);
+Move get_best_move(
+		const Board* board, 
+		enum Color color, 
+		int depth,
+		uint64_t* nodes_visited
+		);
 Move get_best_move_id(
 		const Board* board, 
 		enum Color color, 
@@ -52,4 +57,9 @@ Move get_best_move_id(
 		uint64_t* nodes_visited
 		);
 float calc_mvv_lva_score(const Board* board, const Move* move);
+float _calc_mvv_lva_score(
+		const Board* board, 
+		uint8_t from,
+		uint8_t to
+		);
 BitBoard get_pawn_attacks(BitBoard pawns, enum Color color);
