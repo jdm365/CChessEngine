@@ -28,6 +28,7 @@ void reset_move_list(MoveList* list);
 // void add_move(MoveList* list, uint8_t from, uint8_t to);
 void add_move(MoveList* list, Move move);
 void print_legal_moves(const Board* board, enum Color color);
+void _print_legal_moves(MoveList* list);
 Move get_move_from_string(const char* move);
 const char* get_string_from_move(Move move);
 bool is_move_legal(MoveList* legal_moves, Move move);

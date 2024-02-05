@@ -86,12 +86,17 @@ void print_legal_moves(const Board* board, enum Color color) {
 	init_move_list(&list);
 
 	get_legal_moves(board, &list, color);
+	_print_legal_moves(&list);
+}
 
-	printf("Number of moves: %d\n", list.count);
-	for (int idx = 0; idx < list.count; ++idx) {
-		Move move = list.moves[idx];
+void _print_legal_moves(MoveList* list) {
+	printf("Number of moves: %d\n", list->count);
+	for (int idx = 0; idx < list->count; ++idx) {
+		Move move = list->moves[idx];
 		printf("%s", translate_square_from_index(move & SQUARE_IDX_MASK));
-		printf("%s\n", translate_square_from_index((move >> DST_SQUARE_SHIFT) & SQUARE_IDX_MASK));
+		printf("%s", translate_square_from_index((move >> DST_SQUARE_SHIFT) & SQUARE_IDX_MASK));
+
+		printf("     Score: %f\n", list->move_scores[idx]);
 	}
 }
 
@@ -747,12 +752,12 @@ void get_legal_moves(
 		MoveList* list,
 		enum Color color
 		) {
+	get_king_moves(board, list, color);
 	get_pawn_moves(board, list, color);
 	get_knight_moves(board, list, color);
 	get_bishop_moves(board, list, color);
 	get_rook_moves(board, list, color);
 	get_queen_moves(board, list, color);
-	get_king_moves(board, list, color);
 
 	// Sort moves
 	insertion_sort(list, list->count);

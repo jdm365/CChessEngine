@@ -43,6 +43,17 @@ float minimax(
 		float beta,
 		uint64_t* nodes_visited
 		);
+float minimax_with_pvs(
+		const Board* board, 
+		enum Color color, 
+		int depth, 
+		int max_depth, 
+		float alpha, 
+		float beta,
+		uint64_t* nodes_visited,
+		bool is_pv_node,
+		Move* pv_moves
+		);
 
 Move get_best_move(
 		const Board* board, 

@@ -95,7 +95,7 @@ void set_bit(BitBoard* board, int index);
 uint8_t translate_square_from_char(const char* square);
 const char* translate_square_from_index(uint8_t square);
 void populate_board_from_fen(Board* board, const char* fen);
-void print_board(Board* board);
+void print_board(const Board* board);
 void print_bitboard(uint64_t bit_board);
 void make_move(Board* board, const char* move);
 void _make_move(

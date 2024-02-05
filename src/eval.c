@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #include "board.h"
@@ -19,16 +18,17 @@ const float KING_VALUE   = 1000.0f;
 // Do array of 12 for convernience. Potentially fix in the future.
 const float PIECE_VALUES[12] = {
 	PAWN_VALUE,
-	PAWN_VALUE,
-	KNIGHT_VALUE,
 	KNIGHT_VALUE,
 	BISHOP_VALUE,
-	BISHOP_VALUE,
 	ROOK_VALUE,
-	ROOK_VALUE,
-	QUEEN_VALUE,
 	QUEEN_VALUE,
 	KING_VALUE,
+
+	PAWN_VALUE,
+	KNIGHT_VALUE,
+	BISHOP_VALUE,
+	ROOK_VALUE,
+	QUEEN_VALUE,
 	KING_VALUE
 };
 
@@ -482,7 +482,110 @@ float minimax(
 			alpha = score;
 		}
 		if (alpha >= beta) {
-			float inc = 0.000001f * ((float)depth * (float)depth);
+			float inc = 0.00001f * ((float)depth * (float)depth);
+			HISTORY_TABLE[from][to] += inc;
+
+			if (HISTORY_TABLE[from][to] > 10.0f) {
+				printf("HISTORY_TABLE overflow\n");
+				exit(1);
+			}
+			break;
+		}
+	}
+	return best_score;
+}
+
+
+float minimax_with_pvs(
+		const Board* board, 
+		enum Color color, 
+		int depth, 
+		int max_depth, 
+		float alpha, 
+		float beta,
+		uint64_t* nodes_visited,
+		bool is_pv_node,
+		Move* pv_moves
+		) {
+	float maximizing_factor = (1.0f - 2.0f * color);
+
+	if ((depth == max_depth) || game_over(board)) {
+		return eval_board(board) * maximizing_factor;
+	}
+
+	MoveList moves;
+	init_move_list(&moves);
+	get_legal_moves(board, &moves, color);
+
+	if (moves.count == 0) {
+		return eval_board(board) * maximizing_factor;
+	}
+
+	float best_score = -INF;
+
+	for (int idx = 0; idx < moves.count; ++idx) {
+		// TODO: LMR
+
+		++*nodes_visited;
+		Move move = moves.moves[idx];
+
+		Board new_board = *board;
+		uint8_t from, to;
+		decode_move(move, &from, &to);
+
+		_make_move(&new_board, from, to);
+		float score;
+
+		if (idx == 0 || !is_pv_node) {
+			score = -minimax_with_pvs(
+				&new_board, 
+				!color, 
+				depth + 1, 
+				max_depth, 
+				-beta, 
+				-alpha,
+				nodes_visited,
+				true,
+				pv_moves
+				);
+		}	
+		else {
+			score = -minimax_with_pvs(
+				&new_board, 
+				!color, 
+				depth + 1, 
+				max_depth, 
+				-alpha - 0.001f, 
+				-alpha,
+				nodes_visited,
+				false,
+				pv_moves
+				);
+			if (alpha < score && score < beta) {
+				score = -minimax_with_pvs(
+					&new_board, 
+					!color, 
+					depth + 1, 
+					max_depth, 
+					-beta, 
+					-score,
+					nodes_visited,
+					true,
+					pv_moves
+					);
+			}
+		}
+
+		if (score > best_score) {
+			best_score = score;
+			pv_moves[depth - 1] = move;
+		}
+		if (score > alpha) {
+			alpha = score;
+		}
+		if (alpha >= beta) {
+			// float inc = 0.00001f * ((float)depth * (float)depth);
+			float inc = 0.000001f * (float)depth;
 			HISTORY_TABLE[from][to] += inc;
 
 			if (HISTORY_TABLE[from][to] > 10.0f) {
@@ -557,24 +660,66 @@ Move get_best_move_id(
 		}
 	}
 
+	// Initialize PV move array
+	Move pv_moves[32] = {0};
+
     clock_t start = clock();
 
+	print_board(board);
     for (int depth = 1; depth <= max_depth; ++depth) {
         best_score = -INF;
+
+		Move pv_move;
+		pv_move = pv_moves[depth - 2];
+		uint8_t from, to;
+		decode_move(pv_move, &from, &to);
+		if (depth > 1) {
+			// Try last depth's PV first
+			if (pv_move != 0) {
+				++*nodes_visited;
+				Board new_board = *board;
+				_make_move(&new_board, from, to);
+
+				best_score = -minimax_with_pvs(
+					&new_board,
+					!color,
+					1,
+					depth,
+					-INF,
+					INF,
+					nodes_visited,
+					true,
+					pv_moves
+				);
+				best_move = pv_move;
+				pv_moves[depth - 1] = best_move;
+			}
+			else {
+				printf("No PV move found\n");
+				exit(1);
+			}
+		}
+		printf("Depth %d\n", depth);
+		_print_legal_moves(&moves);
+		printf("\nPV move: %s", translate_square_from_index(from));
+		printf("%s", translate_square_from_index(to));
+		printf("\n\n");
 
         for (int idx = 0; idx < moves.count; ++idx) {
             ++*nodes_visited;
 
             Move move = moves.moves[idx];
-            Board new_board = *board;
 
+			if (move == pv_move) continue;
+
+            Board new_board = *board;
 
 			uint8_t from, to;
 			decode_move(move, &from, &to);
 
-			float last_history = HISTORY_TABLE[from][to];
-
             _make_move(&new_board, from, to);
+
+			/*
             float score = -minimax(
                 &new_board, 
                 !color, 
@@ -584,18 +729,30 @@ Move get_best_move_id(
                 INF,
                 nodes_visited
             );
+			*/
+            float score = -minimax_with_pvs(
+                &new_board, 
+                !color, 
+                1, 
+                depth, 
+                -INF, 
+                INF,
+                nodes_visited,
+				true,
+				pv_moves
+            );
 
             if (score > best_score) {
                 best_score = score;
                 best_move = move;
+
+				// Update PV move array
+				pv_moves[depth - 1] = move;
             }
-			moves.move_scores[idx] += HISTORY_TABLE[from][to] - last_history;
+			moves.move_scores[idx] += HISTORY_TABLE[from][to];
         }
 		// Reorder moves based on scores
 		insertion_sort(&moves, moves.count);
-
-        // Optional: Check time or other stopping criteria to break early
-        // if (time_elapsed(start) > time_limit) break;
     }
 
 	if (DEBUG) {

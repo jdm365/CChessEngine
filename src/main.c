@@ -146,11 +146,11 @@ int main() {
 	init_bishop_moves();
 	init_rook_moves();
 
-	const int MAX_DEPTH = 4;
+	const int MAX_DEPTH = 6;
 
-	// get_average_num_nodes(MAX_DEPTH);
+	get_average_num_nodes(MAX_DEPTH);
 	// perf_test(MAX_DEPTH);
 	// play_self_with_gui(MAX_DEPTH);
-	play_against_engine(MAX_DEPTH);
+	// play_against_engine(MAX_DEPTH);
 	return 0;
 }

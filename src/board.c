@@ -734,7 +734,7 @@ void populate_board_from_fen(Board* board, const char* fen) {
 	}
 }
 
-void print_board(Board* board) {
+void print_board(const Board* board) {
 	printf("\n  +---+---+---+---+---+---+---+---+\n");
 	for (int rank = 7; rank >= 0; --rank) {
 		printf("%d |", rank + 1);
