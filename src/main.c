@@ -9,6 +9,7 @@
 #include "eval.h"
 #include "gui.h"
 #include "depth_test.h"
+#include "nnue/network.h"
 
 
 
@@ -69,7 +70,7 @@ void play_self_with_gui(int max_depth) {
 			goto quit;
 		}
 
-		color = !color;
+		color = (enum Color)!color;
 		SDL_Delay(500);
 	}
 	quit:
@@ -146,11 +147,13 @@ int main() {
 	init_bishop_moves();
 	init_rook_moves();
 
-	const int MAX_DEPTH = 6;
+	// const int MAX_DEPTH = 4;
 
-	get_average_num_nodes(MAX_DEPTH);
+	// get_average_num_nodes(MAX_DEPTH);
 	// perf_test(MAX_DEPTH);
 	// play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
+
+	test_nnue();
 	return 0;
 }

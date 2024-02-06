@@ -1,11 +1,11 @@
 ## Makefile
 PROJECT_NAME = $(shell basename "$(realpath ./)")
 
-CXX = clang
-## CXX = gcc
-CXXFLAGS = -Wall -g -O3 -ffast-math
+## CXX = clang
+CXX = gcc
+CXXFLAGS = -std=c2x
+CXXFLAGS += -Wall -g -O3 -ffast-math
 CXXFLAGS += -mpopcnt -march=native -mtune=native
-CXXFLAGS += -lm
 CXXFLAGS += -Wno-format
 OS = $(shell uname -s)
 ifeq ($(OS), Darwin)
@@ -15,9 +15,15 @@ else
 endif
 
 SRCS = src/*.c
-INCLUDES = -Isrc/*.h
+INCLUDES = -I./src/*.h
 TARGET = bin/release/$(PROJECT_NAME)
-LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
+LIBS = -lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer -lm
+
+NNUE_SRCS     = src/nnue/*.c
+NNUE_INCLUDES = -I./src/nnue/*.h
+SRCS     += $(NNUE_SRCS)
+INCLUDES += $(NNUE_INCLUDES)
+
 
 all:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -o $(TARGET)

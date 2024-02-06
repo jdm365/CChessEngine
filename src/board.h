@@ -51,7 +51,8 @@ uint64_t magic_hash(uint64_t occupancy, uint64_t magic, uint8_t bits);
 void init_bishop_moves();
 void init_rook_moves();
 
-enum Piece {
+// enum Piece {
+enum __attribute__((packed)) Piece {
 	PAWN,
 	KNIGHT,
 	BISHOP,
@@ -60,12 +61,14 @@ enum Piece {
 	KING,
 	EMPTY_PIECE
 };
-enum Color {
+// enum Color {
+enum __attribute__((packed)) Color {
 	WHITE,
 	BLACK,
 	EMPTY
 };
-enum ColoredPiece {
+// enum ColoredPiece {
+enum __attribute__((packed)) ColoredPiece {
 	WHITE_PAWN,
 	WHITE_KNIGHT,
 	WHITE_BISHOP,

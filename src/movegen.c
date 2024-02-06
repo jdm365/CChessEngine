@@ -9,10 +9,6 @@
 #include "movegen.h"
 #include "eval.h"
 
-// static inline uint8_t min(const uint8_t a, const uint8_t b) {
-	// return a < b ? a : b;
-// }
-
 inline void create_move(Move* move, uint8_t from, uint8_t to) {
 	*move = (from & SQUARE_IDX_MASK) | (to << DST_SQUARE_SHIFT);
 }
@@ -785,7 +781,12 @@ static void search_legal_moves(
 		Board new_board = *board;
 		_make_move(&new_board, from, to);
 
-		search_legal_moves(&new_board, !color, max_depth - 1, nodes_visited);
+		search_legal_moves(
+				&new_board, 
+				(enum Color)!color, 
+				max_depth - 1, 
+				nodes_visited
+				);
 	}
 }
 

@@ -793,15 +793,13 @@ void print_bitboard(uint64_t bit_board) {
 }
 
 void make_move(Board* board, const char* move) {
-	char* first_two_chars = malloc(3);
+	char first_two_chars[3];
 	strncpy(first_two_chars, move, 2);
 	uint8_t from_square = translate_square_from_char(first_two_chars);
-	free(first_two_chars);
 
-	char* last_two_chars = malloc(3);
+	char last_two_chars[3];
 	strncpy(last_two_chars, move + 2, 2);
 	uint8_t to_square = translate_square_from_char(last_two_chars);
-	free(last_two_chars);
 
 	_make_move(board, from_square, to_square);
 }
@@ -875,12 +873,14 @@ inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 	uint8_t rook_from_square = (to_square > from_square) ? to_square + 1 : to_square - 2;
 	uint8_t rook_to_square   = (to_square > from_square) ? to_square - 1 : to_square + 1;
 
-	bool is_white = (from_square == 4);
+	// bool is_white = (from_square == 4);
 
 	// Remove king from from_square and rook from appropriate square
 	// Guaranteed no pieces captured, so don't remove anything from to squares.
-	enum ColoredPiece king = WHITE_KING + 6 * !is_white;
-	enum ColoredPiece rook = WHITE_ROOK + 6 * !is_white;
+	// enum ColoredPiece king = WHITE_KING + 6 * !is_white;
+	// enum ColoredPiece rook = WHITE_ROOK + 6 * !is_white;
+	uint8_t king = (uint8_t)WHITE_KING + 6 * (from_square != 4);
+	uint8_t rook = (uint8_t)WHITE_ROOK + 6 * (from_square != 4);
 
 	board->pieces[king] &= ~from_square_mask;
 	board->pieces[king] |= to_square_mask;
@@ -915,7 +915,7 @@ inline enum Color is_occupied_by(const Board* board, uint8_t square) {
 inline enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
 	for (int idx = 0; idx < 12; ++idx) {
 		if (board->pieces[idx] & (1ULL << square)) {
-			return idx;
+			return (enum ColoredPiece)idx;
 		}
 	}
 	return EMPTY_SQUARE;
@@ -924,7 +924,7 @@ inline enum ColoredPiece colored_piece_at(const Board* board, uint8_t square) {
 inline enum Piece piece_at(const Board* board, uint8_t square) {
 	for (int idx = 0; idx < 6; ++idx) {
 		if ((board->pieces[idx] | board->pieces[idx + 6]) & (1ULL << square)) {
-			return idx;
+			return (enum Piece)idx;
 		}
 	}
 	return EMPTY_PIECE;

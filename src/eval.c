@@ -468,7 +468,7 @@ float minimax(
 		_make_move(&new_board, from, to);
 		float score = -minimax(
 				&new_board, 
-				!color, 
+				(enum Color)!color, 
 				depth + 1, 
 				max_depth, 
 				-beta, 
@@ -539,7 +539,7 @@ float minimax_with_pvs(
 		if (idx == 0 || !is_pv_node) {
 			score = -minimax_with_pvs(
 				&new_board, 
-				!color, 
+				(enum Color)!color, 
 				depth + 1, 
 				max_depth, 
 				-beta, 
@@ -552,7 +552,7 @@ float minimax_with_pvs(
 		else {
 			score = -minimax_with_pvs(
 				&new_board, 
-				!color, 
+				(enum Color)!color, 
 				depth + 1, 
 				max_depth, 
 				-alpha - 0.001f, 
@@ -564,7 +564,7 @@ float minimax_with_pvs(
 			if (alpha < score && score < beta) {
 				score = -minimax_with_pvs(
 					&new_board, 
-					!color, 
+					(enum Color)!color, 
 					depth + 1, 
 					max_depth, 
 					-beta, 
@@ -619,7 +619,7 @@ Move get_best_move(const Board* board, enum Color color, int depth, uint64_t* no
 		_make_move(&new_board, from, to);
 		float score = -minimax(
 				&new_board, 
-				!color, 
+				(enum Color)!color, 
 				1, 
 				depth, 
 				-INF, 
@@ -665,7 +665,6 @@ Move get_best_move_id(
 
     clock_t start = clock();
 
-	print_board(board);
     for (int depth = 1; depth <= max_depth; ++depth) {
         best_score = -INF;
 
@@ -682,7 +681,7 @@ Move get_best_move_id(
 
 				best_score = -minimax_with_pvs(
 					&new_board,
-					!color,
+					(enum Color)!color,
 					1,
 					depth,
 					-INF,
@@ -699,11 +698,6 @@ Move get_best_move_id(
 				exit(1);
 			}
 		}
-		printf("Depth %d\n", depth);
-		_print_legal_moves(&moves);
-		printf("\nPV move: %s", translate_square_from_index(from));
-		printf("%s", translate_square_from_index(to));
-		printf("\n\n");
 
         for (int idx = 0; idx < moves.count; ++idx) {
             ++*nodes_visited;
@@ -732,7 +726,7 @@ Move get_best_move_id(
 			*/
             float score = -minimax_with_pvs(
                 &new_board, 
-                !color, 
+                (enum Color)!color, 
                 1, 
                 depth, 
                 -INF, 
