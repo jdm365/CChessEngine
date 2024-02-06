@@ -2,12 +2,20 @@
 
 #include <stdint.h>
 
-// NNUE
-// Will try without bias first.
-// Also will try without mirrored network heads for 
-// white and black pieces.
+#include "../board.h"
 
-#define INPUT_LAYER_DIM 40960
+/******************************************************
+NNUE
+ * Will try without bias first.
+ * Also will try without mirrored network heads for
+   white and black pieces.
+******************************************************/
+
+#define BLOCK_SIZE 64
+
+// #define INPUT_LAYER_DIM 40960
+// #define INPUT_LAYER_DIM 45056
+#define INPUT_LAYER_DIM 768
 #define HIDDEN_LAYER_DIM_1 256
 #define HIDDEN_LAYER_DIM_23 32 
 
@@ -65,5 +73,9 @@ float scale_int32(int32_t x);
 void  clamped_relu_16_8(const int16_t* A, int8_t* B, int n);
 void  nnue_first_layer();
 float full_forward();
+float forward_incremental(const Board* board);
+
+
+void encode_board_state_full(const Board* board);
 
 void test_nnue();
