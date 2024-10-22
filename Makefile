@@ -27,6 +27,7 @@ INCLUDES += $(NNUE_INCLUDES)
 
 all:
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -o $(TARGET)
+	cp $(TARGET) ./lichess-bot/engines
 
 run: all
 	./$(TARGET)
@@ -36,9 +37,10 @@ sanitize:
 	./$(TARGET)
 
 profile:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -pg -o $(TARGET)
-	./$(TARGET)
-	gprof $(TARGET) gmon.out > analysis.txt
+	## $(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -pg -o $(TARGET)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) $(LDFLAGS) $(LIBS) -o $(TARGET)
+	sudo perf record ./$(TARGET)
+	sudo perf report
 
 
 clean:
