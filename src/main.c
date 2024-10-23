@@ -50,21 +50,40 @@ void uci_loop() {
             } else if (strncmp(ptr, "fen", 3) == 0) {
                 // Custom FEN string
                 ptr += 4; // Skip 'fen '
-                // init_board(&board);
+                init_board(&board);
                 populate_board_from_fen(&board, ptr); // Assuming your populate_board_from_fen function works correctly
-            }
+            } else {
+				exit(1);
+			}
+
+			// Parse the move list
+			ptr = strstr(input, "moves");
+			if (ptr != NULL) {
+				ptr += 6;
+				while (*ptr) {
+					uint8_t from = translate_square_from_char(ptr);
+					uint8_t to   = translate_square_from_char(ptr + 2);
+
+					_make_move(&board, from, to);
+					ptr += 5;
+				}
+			}
 
         } else if (strncmp(input, "go", 2) == 0) {
 
             // Process the 'go' command and search for the best move
             uint64_t nodes_searched;
-            Move best_move = get_best_move_id(&board, WHITE, 4, &nodes_searched); // Example: depth=4
+            Move best_move = get_best_move_id(&board, WHITE, 6, &nodes_searched); // Example: depth=4
             uint8_t from, to;
             decode_move(best_move, &from, &to);
 
             // Output the best move in UCI format
             printf("bestmove %s", translate_square_from_index(from));
-			printf("%s\n", translate_square_from_index(to));
+			printf("%s", translate_square_from_index(to));
+			if ((to > 55) && (piece_at(&board, from) == WHITE_PAWN)) {
+				printf("q");
+			}
+			printf("\n");
 			fflush(stdout);
 
 			reset_move_list(&moves);

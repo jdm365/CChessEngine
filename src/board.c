@@ -723,7 +723,7 @@ void populate_board_from_fen(Board* board, const char* fen) {
 				square_cntr += 7;
 				break;
 			default:
-				printf("Invalid piece: %c\n", piece);
+				printf("Invalid piece: %c - %d\n", piece, square_cntr);
 				exit(1);
 		}
 		square_cntr++;
