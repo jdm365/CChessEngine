@@ -582,6 +582,7 @@ void init_TT() {
 		TT[idx].flag = 0;
 		TT[idx].score = 0;
 		TT[idx].move_number = 0;
+		TT[idx].best_move = 0;
 	}
 }
 
@@ -602,7 +603,8 @@ void store_TT_entry(
 		float score, 
 		uint8_t depth, 
 		uint8_t flag,
-		uint16_t move_number
+		uint16_t move_number,
+		Move best_move
 		) {
 	uint64_t key = zobrist_hash(board);
 
@@ -615,6 +617,7 @@ void store_TT_entry(
         entry->flag  = flag;
         entry->score = score;
 		entry->move_number = MOVE_NUMBER;
+		entry->best_move = best_move;
     }
 }
 

@@ -242,7 +242,7 @@ int main() {
 	init_zobrist_table();
 	init_TT();
 
-	const int MAX_DEPTH = 4;
+	const int MAX_DEPTH = 6;
 
 	// uci_loop(MAX_DEPTH);
 	// get_average_num_nodes(MAX_DEPTH);

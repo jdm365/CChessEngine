@@ -7,7 +7,7 @@ typedef uint16_t Move;
 
 extern uint16_t MOVE_NUMBER;
 
-#define TT_SIZE ((uint64_t)(1ULL << 30))
+#define TT_SIZE ((uint64_t)(1ULL << 26))
 
 enum TTFlag {
 	EXACT,
@@ -15,12 +15,14 @@ enum TTFlag {
 	UPPER_BOUND
 };
 
+// TODO: Pack efficiently.
 typedef struct {
     uint64_t key;           // Zobrist hash of position
     float score;            // Score of position
     uint8_t depth;          // Depth searched
     uint8_t flag;           // Type of node (EXACT, ALPHA, or BETA)
-	uint16_t move_number;      // Move number
+	uint16_t move_number;   // Move number
+	Move best_move;      	// Move
 } __attribute__((packed)) TTEntry;
 
 extern TTEntry* TT;
@@ -119,7 +121,8 @@ void store_TT_entry(
 		float score, 
 		uint8_t depth, 
 		uint8_t flag,
-		uint16_t move_number
+		uint16_t move_number,
+		Move best_move
 		);
 uint64_t zobrist_hash(const Board* board);
 
