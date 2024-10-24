@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <time.h>
 
 #include "board.h"
 
@@ -44,6 +45,9 @@ BitBoard ROOK_MASKS[64];
 uint64_t ROOK_MAGICS[64];
 uint8_t  ROOK_SHIFT[64];
 BitBoard ROOK_MOVES[64][4096];
+
+uint64_t ZOBRIST[64][12];
+TTEntry* TT;
 
 void init_pawn_moves() {
 	for (int square = 0; square < 64; square++) {
@@ -559,6 +563,59 @@ void init_rook_moves() {
 	}
 	// Now to get move at runtime, we can do:
 	// ROOK_MOVES[square][magic_hash(occupancy, ROOK_MAGICS[square], __builtin_popcountll(ROOK_MASKS[square]))]
+}
+
+void init_zobrist_table() {
+	srand(time(NULL));
+    for (int square = 0; square < 64; ++square) {
+        for (int piece = 0; piece < 12; ++piece) {
+            ZOBRIST[square][piece] = ((uint64_t)rand() << 32) | rand();
+        }
+    }
+}
+
+void init_TT() {
+	TT = (TTEntry*)malloc(TT_SIZE * sizeof(TTEntry));
+	for (int idx = 0; idx < TT_SIZE; ++idx) {
+		TT[idx].key = 0;
+		TT[idx].depth = 0;
+		TT[idx].flag = 0;
+		TT[idx].score = 0;
+		TT[idx].move_number = 0;
+	}
+}
+
+uint64_t zobrist_hash(const Board* board) {
+	uint64_t hash = 0;
+	for (int square = 0; square < 64; ++square) {
+		uint8_t piece = board->piece_at[square];
+
+		if (piece != EMPTY_SQUARE) {
+			hash ^= ZOBRIST[square][piece];
+		}
+	}
+	return hash;
+}
+
+void store_TT_entry(
+		const Board* board, 
+		float score, 
+		uint8_t depth, 
+		uint8_t flag,
+		uint16_t move_number
+		) {
+	uint64_t key = zobrist_hash(board);
+
+	uint64_t index = key % TT_SIZE;
+	TTEntry* entry = &TT[index];
+
+	if (entry->depth <= depth || entry->depth == 0) {
+        entry->key = key;
+        entry->depth = depth;
+        entry->flag  = flag;
+        entry->score = score;
+		entry->move_number = MOVE_NUMBER;
+    }
 }
 
 void init_board(Board* board) {

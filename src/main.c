@@ -9,7 +9,7 @@
 #include "movegen.h"
 #include "eval.h"
 #include "gui.h"
-// #include "depth_test.h"
+#include "depth_test.h"
 // #include "nnue/network.h"
 
 
@@ -18,7 +18,7 @@
 
 #define INPUT_BUFFER_SIZE 4096
 
-void uci_loop() {
+void uci_loop(const int max_depth) {
     char input[INPUT_BUFFER_SIZE];
     MoveList moves;
 
@@ -73,14 +73,14 @@ void uci_loop() {
 
             // Process the 'go' command and search for the best move
             uint64_t nodes_searched;
-            Move best_move = get_best_move_id(&board, WHITE, 6, &nodes_searched); // Example: depth=4
+            Move best_move = get_best_move_id(&board, WHITE, max_depth, &nodes_searched); // Example: depth=4
             uint8_t from, to;
             decode_move(best_move, &from, &to);
 
             // Output the best move in UCI format
             printf("bestmove %s", translate_square_from_index(from));
 			printf("%s", translate_square_from_index(to));
-			if ((to > 55) && (piece_at(&board, from) == WHITE_PAWN)) {
+			if ((to > 55) && (colored_piece_at(&board, from) == WHITE_PAWN)) {
 				printf("q");
 			}
 			printf("\n");
@@ -239,13 +239,15 @@ int main() {
 
 	init_bishop_moves();
 	init_rook_moves();
+	init_zobrist_table();
+	init_TT();
 
 	const int MAX_DEPTH = 4;
 
-	uci_loop();
+	// uci_loop(MAX_DEPTH);
 	// get_average_num_nodes(MAX_DEPTH);
 	// perf_test(MAX_DEPTH);
-	// play_self_with_gui(MAX_DEPTH);
+	play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 
 	// test_nnue();

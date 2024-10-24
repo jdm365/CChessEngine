@@ -3,7 +3,28 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+typedef uint16_t Move;
+
 extern uint16_t MOVE_NUMBER;
+
+#define TT_SIZE ((uint64_t)(1ULL << 30))
+
+enum TTFlag {
+	EXACT,
+	LOWER_BOUND,
+	UPPER_BOUND
+};
+
+typedef struct {
+    uint64_t key;           // Zobrist hash of position
+    float score;            // Score of position
+    uint8_t depth;          // Depth searched
+    uint8_t flag;           // Type of node (EXACT, ALPHA, or BETA)
+	uint16_t move_number;      // Move number
+} __attribute__((packed)) TTEntry;
+
+extern TTEntry* TT;
+extern uint64_t ZOBRIST[64][12];
 
 extern const char* STARTING_FEN;
 
@@ -50,6 +71,8 @@ extern BitBoard ROOK_MOVES[64][4096];
 uint64_t magic_hash(uint64_t occupancy, uint64_t magic, uint8_t bits);
 void init_bishop_moves();
 void init_rook_moves();
+void init_zobrist_table();
+void init_TT();
 
 // enum Piece {
 enum __attribute__((packed)) Piece {
@@ -90,6 +113,15 @@ typedef struct {
 	uint8_t piece_at[64];
 	BitBoard pieces[12];
 } Board;
+
+void store_TT_entry(
+		const Board* board, 
+		float score, 
+		uint8_t depth, 
+		uint8_t flag,
+		uint16_t move_number
+		);
+uint64_t zobrist_hash(const Board* board);
 
 void get_square_occupancy(const Board* board);
 

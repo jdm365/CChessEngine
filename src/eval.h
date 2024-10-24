@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 #include "board.h"
 #include "movegen.h"
@@ -12,7 +13,6 @@ extern const float ROOK_VALUE;
 extern const float QUEEN_VALUE;
 extern const float KING_VALUE;
 
-// extern const float PIECE_VALUES[6];
 extern const float PIECE_VALUES[12];
 
 extern const float PAWN_TABLE[64];

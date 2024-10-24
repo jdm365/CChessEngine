@@ -486,8 +486,11 @@ float minimax(
 			HISTORY_TABLE[from][to] += inc;
 
 			if (HISTORY_TABLE[from][to] > 10.0f) {
-				printf("HISTORY_TABLE overflow\n");
-				exit(1);
+				
+				// Reset history table
+				for (int idx = 0; idx < 4096; ++idx) {
+					HISTORY_TABLE[idx / 64][idx % 64] *= 0.01f;
+				}
 			}
 			break;
 		}
@@ -513,6 +516,42 @@ float minimax_with_pvs(
 		return eval_board(board) * maximizing_factor;
 	}
 
+	uint64_t key = zobrist_hash(board);
+	uint64_t index = key % TT_SIZE;
+    TTEntry tt_entry = TT[index];
+
+    if (
+			!is_pv_node
+				&& 
+			(tt_entry.key == key) 
+				&& 
+			(tt_entry.depth >= depth) 
+				&& 
+			(tt_entry.move_number == MOVE_NUMBER)
+		) {
+		float tt_score = tt_entry.score * maximizing_factor;
+
+        switch (tt_entry.flag) {
+            case EXACT:
+				printf("Exact\n");
+				return tt_score;
+            case LOWER_BOUND:  // Failed high, stored beta
+                if (tt_score >= beta) {
+                    return tt_score;
+                }
+                break;
+            case UPPER_BOUND:  // Failed low, stored alpha
+                if (tt_score <= alpha) {
+					printf("Upper bound\n");
+                    return tt_score;
+                }
+                break;
+			default:
+				printf("Error: Invalid flag in TT entry\n");
+				exit(1);
+        }
+    }
+
 	MoveList moves;
 	init_move_list(&moves);
 	get_legal_moves(board, &moves, color);
@@ -521,7 +560,26 @@ float minimax_with_pvs(
 		return eval_board(board) * maximizing_factor;
 	}
 
+	/*
+	if (tt_entry.key != 0) {
+        uint8_t tt_from, tt_to;
+        decode_move(tt_entry.best_move, &tt_from, &tt_to);
+        for (int i = 0; i < moves.count; i++) {
+            uint8_t from, to;
+            decode_move(moves.moves[i], &from, &to);
+            if (from == tt_from && to == tt_to) {
+                // Swap with first position
+                Move temp = moves.moves[0];
+                moves.moves[0] = moves.moves[i];
+                moves.moves[i] = temp;
+                break;
+            }
+        }
+    }
+	*/
+
 	float best_score = -INF;
+	float orig_alpha = alpha;
 
 	for (int idx = 0; idx < moves.count; ++idx) {
 		// TODO: LMR
@@ -536,6 +594,7 @@ float minimax_with_pvs(
 		_make_move(&new_board, from, to);
 		float score;
 
+		const float PV_WINDOW = 1.0f;
 		if (idx == 0 || !is_pv_node) {
 			score = -minimax_with_pvs(
 				&new_board, 
@@ -555,7 +614,7 @@ float minimax_with_pvs(
 				(enum Color)!color, 
 				depth + 1, 
 				max_depth, 
-				-alpha - 0.001f, 
+				-alpha - PV_WINDOW,
 				-alpha,
 				nodes_visited,
 				false,
@@ -584,17 +643,36 @@ float minimax_with_pvs(
 			alpha = score;
 		}
 		if (alpha >= beta) {
-			// float inc = 0.00001f * ((float)depth * (float)depth);
 			float inc = 0.000001f * (float)depth;
 			HISTORY_TABLE[from][to] += inc;
 
 			if (HISTORY_TABLE[from][to] > 10.0f) {
-				printf("HISTORY_TABLE overflow\n");
-				exit(1);
+				
+				// Reset history table
+				for (int idx = 0; idx < 4096; ++idx) {
+					HISTORY_TABLE[idx / 64][idx % 64] *= 0.01f;
+				}
 			}
 			break;
 		}
 	}
+
+	uint8_t flag = EXACT;
+	if (best_score <= orig_alpha) {
+		flag = UPPER_BOUND;
+	} else if (best_score >= beta) {
+		flag = LOWER_BOUND;
+	}
+
+	store_TT_entry(
+			board,
+			best_score * -maximizing_factor, 
+			// best_score, 
+			(uint8_t)depth, 
+			flag,
+			MOVE_NUMBER
+			);
+
 	return best_score;
 }
 
