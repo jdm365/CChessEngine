@@ -25,7 +25,7 @@ extern const float KING_TABLE_ENDGAME[64];
 
 extern const uint8_t FLIP_TABLE[64];
 
-extern float HISTORY_TABLE[64][64];
+extern float HISTORY_TABLE[2][64][64];
 
 float eval_pawns(const Board* board);
 float eval_knights(const Board* board);
@@ -44,7 +44,8 @@ float minimax(
 		uint64_t* nodes_visited
 		);
 float minimax_with_pvs(
-		const Board* board, 
+		// const Board* board, 
+		Board* board, 
 		enum Color color, 
 		int depth, 
 		int max_depth, 
@@ -62,14 +63,14 @@ Move get_best_move(
 		uint64_t* nodes_visited
 		);
 Move get_best_move_id(
-		const Board* board, 
+		Board* board, 
 		enum Color color, 
 		int max_depth,
 		uint64_t* nodes_visited
 		);
-float calc_mvv_lva_score(const Board* board, const Move* move);
-float _calc_mvv_lva_score(
+float calc_mvv_lva_score(
 		const Board* board, 
+		enum Color color,
 		uint8_t from,
 		uint8_t to
 		);

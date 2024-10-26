@@ -245,9 +245,9 @@ int main() {
 	const int MAX_DEPTH = 6;
 
 	// uci_loop(MAX_DEPTH);
-	// get_average_num_nodes(MAX_DEPTH);
+	get_average_num_nodes(MAX_DEPTH);
 	// perf_test(MAX_DEPTH);
-	play_self_with_gui(MAX_DEPTH);
+	// play_self_with_gui(MAX_DEPTH);
 	// play_against_engine(MAX_DEPTH);
 
 	// test_nnue();

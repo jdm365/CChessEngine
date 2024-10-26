@@ -3,11 +3,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef uint16_t Move;
-
 extern uint16_t MOVE_NUMBER;
 
 #define TT_SIZE ((uint64_t)(1ULL << 26))
+
+// Forward declaration of typedef struct Move
+typedef struct {
+	uint16_t from : 6;
+	uint16_t to : 6;
+	uint16_t is_killer : 1;
+	uint16_t padding : 3;
+} Move;
+
 
 enum TTFlag {
 	EXACT,
@@ -138,12 +145,20 @@ void populate_board_from_fen(Board* board, const char* fen);
 void print_board(const Board* board);
 void print_bitboard(uint64_t bit_board);
 void make_move(Board* board, const char* move);
-void _make_move(
+uint8_t _make_move(
 		Board* board, 
 		uint8_t from_square, 
 		uint8_t to_square
 		);
+void unmake_move(
+		Board* board, 
+		enum ColoredPiece captured_piece,
+		uint8_t promotion,
+		uint8_t from_square, 
+		uint8_t to_square
+		);
 void _castle(Board* board, uint8_t from_square, uint8_t to_square);
+void un_castle(Board* board, uint8_t from_square, uint8_t to_square);
 enum Color is_occupied_by(const Board* board, uint8_t square);
 enum ColoredPiece colored_piece_at(const Board* board, uint8_t square);
 enum Piece piece_at(const Board* board, uint8_t square);

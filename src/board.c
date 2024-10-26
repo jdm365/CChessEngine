@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "board.h"
+#include "movegen.h"
 
 
 uint16_t MOVE_NUMBER = 0;
@@ -582,7 +583,13 @@ void init_TT() {
 		TT[idx].flag = 0;
 		TT[idx].score = 0;
 		TT[idx].move_number = 0;
-		TT[idx].best_move = 0;
+		TT[idx].best_move = (Move){
+			.from = 0,
+			.to = 0,
+			.is_killer = false,
+			.padding = 0,
+		};
+
 		TT[idx].color = (uint8_t)EMPTY;
 	}
 }
@@ -867,20 +874,11 @@ void make_move(Board* board, const char* move) {
 	_make_move(board, from_square, to_square);
 }
 
-void _make_move(
+uint8_t _make_move(
 		Board* board, 
 		uint8_t from_square, 
 		uint8_t to_square
 		) {
-	/*
-	if (is_occupied_by(board, from_square) == EMPTY) {
-		printf("No piece found at from_square\n");
-		printf("from_square: %d\n", from_square);
-		printf("to_square: %d\n", to_square);
-		print_board(board);
-		exit(1);
-	}
-	*/
 
 	// Check if castling
 	if (
@@ -889,10 +887,9 @@ void _make_move(
 			(abs(from_square - to_square) == 2)
 				&&
 			((board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) & (1ULL << from_square))
-			// (board->piece_at[from_square] == (uint8_t)WHITE_KING || board->piece_at[from_square] == (uint8_t)BLACK_KING)
 		) {
 		_castle(board, from_square, to_square);
-		return;
+		return 0;
 	}
 
 	uint64_t from_square_mask = (1ULL << from_square);
@@ -902,21 +899,13 @@ void _make_move(
 	uint8_t from_piece = board->piece_at[from_square];
 	uint8_t to_piece   = board->piece_at[to_square];
 	
-	/*
-	if (from_piece == EMPTY_SQUARE) {
-		printf("No piece found at from_square\n");
-		printf("from_square: %d\n", from_square);
-		printf("to_square: %d\n", to_square);
-		print_board(board);
-		exit(1);
-	}
-	*/
 	// Remove piece from from_square and to_square
 	board->pieces[from_piece] &= ~from_square_mask;
 	
 	// Check promotion
-	from_piece += 4 * (from_piece == WHITE_PAWN && to_square >= 56);
-	from_piece += 4 * (from_piece == BLACK_PAWN && to_square <= 7);
+	uint8_t promotion = (from_piece == WHITE_PAWN && to_square >= 56) 
+						|| (from_piece == BLACK_PAWN && to_square <= 7);
+	from_piece += 4 * promotion;
 
 	if (to_piece != EMPTY_SQUARE) {
 		board->pieces[to_piece]   &= ~to_square_mask;
@@ -927,7 +916,45 @@ void _make_move(
 
 	board->piece_at[from_square] = (uint8_t)EMPTY_SQUARE;
 	board->piece_at[to_square]   = (uint8_t)from_piece;
+
+	return promotion;
 }
+
+
+void unmake_move(
+		Board* board, 
+		enum ColoredPiece captured_piece,
+		uint8_t promotion,
+		uint8_t from_square, 
+		uint8_t to_square
+		) {
+	// Check if casted
+	if (
+			(from_square == 4 || from_square == 60)
+				&&
+			(abs(from_square - to_square) == 2)
+				&&
+			((board->pieces[WHITE_KING] | board->pieces[BLACK_KING]) & (1ULL << to_square))
+		) {
+		un_castle(board, from_square, to_square);
+		return;
+	}
+	uint64_t from_square_mask = (1ULL << from_square);
+	uint64_t to_square_mask   = (1ULL << to_square);
+
+	// Remove piece from to square and place on from square
+	uint8_t to_piece = board->piece_at[to_square];
+
+	board->pieces[to_piece] &= ~to_square_mask;
+	to_piece -= 4 * promotion;
+	board->pieces[to_piece] |= from_square_mask;
+
+	board->pieces[captured_piece] |= to_square_mask;
+
+	board->piece_at[to_square]   = (uint8_t)captured_piece;
+	board->piece_at[from_square] = (uint8_t)colored_piece_at(board, from_square);
+}
+
 
 inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 	uint64_t from_square_mask = (1ULL << from_square);
@@ -960,6 +987,44 @@ inline void _castle(Board* board, uint8_t from_square, uint8_t to_square) {
 	board->piece_at[to_square]   = (uint8_t)king;
 }
 
+inline void un_castle(Board* board, uint8_t from_square, uint8_t to_square) {
+	uint64_t from_square_mask = (1ULL << from_square);
+	uint64_t to_square_mask   = (1ULL << to_square);
+
+	uint8_t rook_from_square = (to_square > from_square) ? to_square + 1 : to_square - 2;
+	uint8_t rook_to_square   = (to_square > from_square) ? to_square - 1 : to_square + 1;
+
+	// bool is_white = (from_square == 4);
+
+	// Remove king from from_square and rook from appropriate square
+	// Guaranteed no pieces captured, so don't remove anything from to squares.
+	// enum ColoredPiece king = WHITE_KING + 6 * !is_white;
+	// enum ColoredPiece rook = WHITE_ROOK + 6 * !is_white;
+	uint8_t king = (uint8_t)WHITE_KING + 6 * (from_square != 4);
+	uint8_t rook = (uint8_t)WHITE_ROOK + 6 * (from_square != 4);
+
+	// board->pieces[king] &= ~from_square_mask;
+	// board->pieces[king] |= to_square_mask;
+	board->pieces[king] &= ~to_square_mask;
+	board->pieces[king] |= from_square_mask;
+
+	// board->pieces[rook] &= ~(1ULL << rook_from_square);
+	// board->pieces[rook] |= (1ULL << rook_to_square);
+	board->pieces[rook] &= ~(1ULL << rook_to_square);
+	board->pieces[rook] |= (1ULL << rook_from_square);
+
+	// Update rook position
+	// board->piece_at[rook_from_square] = (uint8_t)EMPTY_SQUARE;
+	// board->piece_at[rook_to_square]   = (uint8_t)rook;
+	board->piece_at[rook_to_square]   = (uint8_t)EMPTY_SQUARE;
+	board->piece_at[rook_from_square] = (uint8_t)rook;
+
+	// Update king position
+	// board->piece_at[from_square] = (uint8_t)EMPTY_SQUARE;
+	// board->piece_at[to_square]   = (uint8_t)king;
+	board->piece_at[to_square]   = (uint8_t)EMPTY_SQUARE;
+	board->piece_at[from_square] = (uint8_t)king;
+}
 
 inline enum Color is_occupied_by(const Board* board, uint8_t square) {
 	BitBoard white_board = get_occupied_squares_color(board, WHITE);

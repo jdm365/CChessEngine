@@ -538,9 +538,11 @@ void get_average_num_nodes(int depth) {
 		get_best_move_id(&board, WHITE, depth, &nodes_visited);
 		average += ((float)nodes_visited  * 0.001 / 500.0f);
 
-		for (int i = 0; i < 64; ++i) {
-			for (int j = 0; j < 64; ++j) {
-				HISTORY_TABLE[i][j] = 0.0f;
+		for (int c = 0; c < 2; ++c) {
+			for (int i = 0; i < 64; ++i) {
+				for (int j = 0; j < 64; ++j) {
+					HISTORY_TABLE[c][i][j] = 0.0f;
+				}
 			}
 		}
 	}

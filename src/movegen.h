@@ -4,9 +4,6 @@
 
 #include "board.h"
 
-
-typedef uint16_t Move;
-
 #define SQUARE_IDX_MASK 0x3F
 #define DST_SQUARE_SHIFT 6
 #define PROMOTION_TYPE_SHIFT 12
@@ -16,9 +13,9 @@ typedef uint16_t Move;
 
 
 typedef struct {
-	uint16_t count;
 	Move  moves[267];
 	float move_scores[267];
+	uint16_t count;
 } MoveList;
 
 void create_move(Move* move, uint8_t from, uint8_t to);
