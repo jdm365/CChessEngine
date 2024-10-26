@@ -15,7 +15,6 @@ const float ROOK_VALUE   = 5.0f;
 const float QUEEN_VALUE  = 9.0f;
 const float KING_VALUE   = 1000.0f;
 
-// Do array of 12 for convernience. Potentially fix in the future.
 const float PIECE_VALUES[12] = {
 	PAWN_VALUE,
 	KNIGHT_VALUE,
@@ -516,13 +515,14 @@ float minimax_with_pvs(
 		return eval_board(board) * maximizing_factor;
 	}
 
-	/*
+	// Check transposition table
 	uint64_t key = zobrist_hash(board);
 	uint64_t index = key % TT_SIZE;
     TTEntry tt_entry = TT[index];
 
     if (
-			!is_pv_node
+			// !is_pv_node
+			is_pv_node
 				&& 
 			(tt_entry.key == key) 
 				&& 
@@ -530,17 +530,23 @@ float minimax_with_pvs(
 				&& 
 			// (tt_entry.move_number >= MOVE_NUMBER - 2)
 			(tt_entry.move_number >= MOVE_NUMBER)
+				&&
+			(color == tt_entry.color)
 		) {
+		// Reverse score if it's for the opposite color
+		// float tt_score = tt_entry.score * (1.0f - 2.0f * (float)tt_entry.color);
 		float tt_score = tt_entry.score;
 
         switch (tt_entry.flag) {
             case EXACT:
 				return tt_score;
+
             case LOWER_BOUND:  // Failed high, stored beta
                 if (tt_score >= beta) {
                     return tt_score;
                 }
                 break;
+
             case UPPER_BOUND:  // Failed low, stored alpha
                 if (tt_score <= alpha) {
                     return tt_score;
@@ -551,7 +557,6 @@ float minimax_with_pvs(
 				exit(1);
         }
     }
-	*/
 
 	MoveList moves;
 	init_move_list(&moves);
@@ -660,7 +665,8 @@ float minimax_with_pvs(
 			(uint8_t)depth, 
 			flag,
 			MOVE_NUMBER,
-			best_move
+			best_move,
+			color
 			);
 
 	return best_score;

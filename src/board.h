@@ -23,6 +23,7 @@ typedef struct {
     uint8_t flag;           // Type of node (EXACT, ALPHA, or BETA)
 	uint16_t move_number;   // Move number
 	Move best_move;      	// Move
+	uint8_t color;      	// color
 } __attribute__((packed)) TTEntry;
 
 extern TTEntry* TT;
@@ -122,7 +123,8 @@ void store_TT_entry(
 		uint8_t depth, 
 		uint8_t flag,
 		uint16_t move_number,
-		Move best_move
+		Move best_move,
+		enum Color color
 		);
 uint64_t zobrist_hash(const Board* board);
 

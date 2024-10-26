@@ -583,6 +583,7 @@ void init_TT() {
 		TT[idx].score = 0;
 		TT[idx].move_number = 0;
 		TT[idx].best_move = 0;
+		TT[idx].color = (uint8_t)EMPTY;
 	}
 }
 
@@ -604,7 +605,8 @@ void store_TT_entry(
 		uint8_t depth, 
 		uint8_t flag,
 		uint16_t move_number,
-		Move best_move
+		Move best_move,
+		enum Color color
 		) {
 	uint64_t key = zobrist_hash(board);
 
@@ -618,6 +620,7 @@ void store_TT_entry(
         entry->score = score;
 		entry->move_number = MOVE_NUMBER;
 		entry->best_move = best_move;
+		entry->color = (uint8_t)color;
     }
 }
 
